@@ -1,0 +1,107 @@
+# Sample workflow graph — illustrative, not schema (the real YAML schema is an
+# open question; see decisions/open-questions.md). This file makes the concepts
+# concrete: nodes with prompts, judgements as verdict + deterministic checks
+# (D-025), edges keyed by judgement outcome, the review-fail cycle, retry caps
+# escaping to escalation (D-009), a human gate node (D-032), and delivery as a
+# hub-executed node feeding the merge queue (D-030).
+#
+# Graphs are immutable once created (D-033): POSTing this definition mints a
+# new immutable graph, and every edit mints another (D-040). A chunk pins the graph it was
+# minted under and moves to a newer one only by explicit migration (D-034).
+
+name: feature-delivery    # human label, non-unique — a correlator, like node names (D-040);
+                          # the hub mints this graph's unique graph_id at creation.
+                          # NOT authored here: the graph's operational METADATA — enabled
+                          # (D-039), auto_migrate + migration_target (D-037/D-040) — lives
+                          # BESIDE the immutable definition and is set after mint via
+                          # PATCH /graphs/{id}; this file is the definition only (D-033)
+entry: build              # exactly one entry node (a validation rule)
+
+nodes:                    # keys are node NAMES; the hub mints a universally unique
+                          # node_id per node when the graph is minted — same-named
+                          # nodes in different graphs are distinct nodes
+  # Prompts are FILE REFERENCES, resolved relative to this YAML and inlined
+  # when the graph is minted (D-033) — the stored graph carries the full
+  # text, never the path. Editing a prompt file and re-submitting mints a new
+  # graph; auto_migrate then drifts chunks onto it at their next transition.
+  # Naming convention: prompts/{node}.md for a node's base prompt (its
+  # invariant identity), prompts/{to}.from-{from}.md for an edge's
+  # prompt_addendum (the arrival context, appended to the base), and
+  # prompts/{node}.judgement.md for the judgement prompt (D-038) —
+  # delivered into the session AFTER the worker declares done, eliciting
+  # the structured verdict; no verdict back = failure (D-009).
+  build:                  # node names are what runner-side gate config selects on
+                          # (D-032/D-041) — there is no type field
+    executor: runner
+    prompt: ./prompts/build.md
+    checks:               # the deterministic half of the judgement (D-025)
+      - mise run lint
+      - mise run test
+    judgement:
+      prompt: ./prompts/build.judgement.md  # authored prose only (D-038); the engine appends
+                                            # the generated elicitation tail from `choices`:
+                                            # "…select exactly one and output it as
+                                            # <Choice>{name}</Choice>" (D-042)
+      choices:            # reified Choices (D-042) — the hub mints a choice_id per entry;
+                          # the edge keys below resolve against these at mint
+        pass: The work meets this node's criteria and the checks are green.
+        fail: The work does not meet the criteria; the failure output is attached.
+      pass: review        # every choice must have an edge (validation rule = id resolution)
+      fail:               # failed checks re-enter build — the self-loop edge
+        to: build
+        prompt_addendum: ./prompts/build.from-build.md   # "checks failed, output attached"
+    retries:
+      max: 2              # bounded — the escape hatch out of any cycle
+      exhausted: escalate # -> needs_human, with the takeover resume command recorded
+    # Failure mode (D-009): a worker that exits with no verdict is a failure,
+    # never a pass — it consumes a retry like any other failure.
+
+  review:
+    executor: runner
+    prompt: ./prompts/review.md
+    produces:
+      - review-findings   # asset artifact — the chunk's memory across nodes (D-026)
+    judgement:
+      prompt: ./prompts/review.judgement.md
+      choices:
+        pass: The submitted work passes review; findings are advisory only.
+        fail: Review found blocking issues, recorded in the review-findings asset.
+      pass: approve-gate
+      fail:               # THE LOOP: the findings asset is carried back into
+        to: build         # the build node's envelope on this edge, and the
+                          # addendum is its prose counterpart
+        prompt_addendum: ./prompts/build.from-review.md  # "review failed — address every finding"
+    retries:
+      max: 2
+      exhausted: escalate
+
+  approve-gate:
+    executor: runner
+    # A chunk parked here is waiting_on_human with its reap clock stopped —
+    # the ask/answer machinery reused (D-010/D-015). Delete this node for the
+    # fully autonomous baseline (D-014); a runner can also impose gates on any
+    # node NAME via its own config without forking this graph (D-032/D-041).
+    judgement:
+      by: human           # the structural gate marker (D-041): a person renders the
+                          # judgement — no judgement prompt, no worker verdict
+      choices:            # the SAME Choice model (D-042): these become the board's
+                          # and chat bot's buttons
+        approve: Ship it — the work proceeds to delivery.
+        reject: Send it back to build with comments.
+      approve: deliver
+      reject:             # a human rejection re-enters the cycle
+        to: build
+        prompt_addendum: ./prompts/build.from-approve-gate.md  # "rejected — reviewer comments attached"
+
+  deliver:
+    executor: hub         # the first hub-executed node (D-030); the runner holds
+                          # the chunk's environments until the hub reports back
+    mode: merge-to-main   # or open-pr, where a team wants PRs (mechanics open)
+    judgement:            # hub-executed: choices selected by machinery, not elicited (D-042)
+      choices:
+        landed: The merge queue landed the chunk's git-commit artifacts.
+        conflict: The merge or rebase onto main conflicted.
+      landed: done        # terminal — the chunk's derived status becomes `done`
+      conflict: build     # failure mode: a merge/rebase conflict re-enters build
+                          # (one of the candidate answers to the open merge-queue
+                          # question — shown here to make the cycle visible)
