@@ -46,7 +46,7 @@ The four layers have different lifecycles: product documents should barely chang
 | [design/runner/](./design/runner/index.md) | The runner component: the reconciliation loop, the embedded store (sqlite rationale, epochs), the environment model (opaque env ids, reset-on-acquire, the three capacities), and the tracked contracts for every API the runner speaks. |
 | [design/harness-adapters.md](./design/harness-adapters.md) | The adapter interface, the per-harness comparison, the enforcement wrapper, hooks, and human-takeover flows. |
 | [design/domain/](./design/domain/index.md) | The app-wide domain models — chunk, transition, migration, artifact, question/answer, route, runner, graph — with per-model property tables and the derived status enum. |
-| [design/hub/](./design/hub/index.md) | The hub component: the canonical responsibility list (PM wrapper, workflow record, artifacts, merge queue, registry), the colocated/remote topology, outbound-only runners, the board and chat clients, the hub store, and the API route table. |
+| [design/hub/](./design/hub/index.md) | The hub component: the canonical responsibility list (PM wrapper, workflow record, artifacts, merge queue, registry), the colocated/remote topology, outbound-only runners, the web app and chat clients, the hub store, and the API route table. |
 | [design/ask-answer.md](./design/ask-answer.md) | The ask/answer protocol: ask-and-exit, parking, fan-out, first-write-wins answers, resume-with-answer. |
 | [design/planner.md](./design/planner.md) | The LLM work-shaping planner (parked pending the workflow-graph interplay): execution units, the deterministic validator, conflict packing, batch failure semantics, and the rollout ladder. |
 

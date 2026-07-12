@@ -20,7 +20,7 @@ The single most important design principle runs through every document in this c
 
 > All loop, arbitration, and recovery logic is boring deterministic code. LLMs supply judgment only at well-defined points.
 
-The control plane — the queue, the claim protocol, the reconciliation loop, the lease and fencing logic, the crash recovery — is ordinary deterministic software. It is testable, it is `kill -9` safe, and it never depends on an LLM behaving correctly.
+The control plane — the queue, the acquisition and lease protocol, the reconciliation loop, the fencing logic, the crash recovery — is ordinary deterministic software. It is testable, it is `kill -9` safe, and it never depends on an LLM behaving correctly.
 
 LLMs are invoked only where judgment is genuinely required:
 

@@ -4,7 +4,7 @@ The rollout is a sequence of **named milestones**, each carrying a stable `miles
 
 ## milestone:mvp — the local fleet
 
-Epics (see the [registry](./epics.md)): `epic:store`, `epic:supervisor`, `epic:workflow`, `epic:adapters` (Claude Code), `epic:review`, `epic:delivery`, `epic:ask-answer` (hub slice), `epic:hub` (separation slice).
+Epics (see the [registry](./epics.md)): `epic:store`, `epic:supervisor`, `epic:workflow`, `epic:adapters` (Claude Code), `epic:review`, `epic:delivery`, `epic:ask-answer` (hub slice), `epic:hub` (separation slice), `epic:board` (local slice).
 
 This is the MVP; [mvp.md](./mvp.md) states its acceptance journey, testable criteria, and cut list.
 
@@ -13,19 +13,20 @@ This is the MVP; [mvp.md](./mvp.md) states its acceptance journey, testable crit
 - Artifacts: branch/commit pointers (pushed to the forge) and assets, submitted per node-step and stored at the hub.
 - Supervisor reconciliation loop: `blizzard-runner`, a daemon exposing a local API, with its store — sqlite (WAL) — embedded inside it (D-023); it advances held chunks node to node without re-queuing (D-027).
 - The `blizzard` CLI as a pure client: local verbs → runner local API, fleet verbs → hub HTTP API.
-- Strict solo chunks (one PM item, one env, one agent).
+- Solo execution (one env, one agent per chunk); a chunk wraps one PM item unless grouped by hand in the web app (D-048).
+- The hub-served **web app** (D-048): fleet observability plus queue shaping — reorder the ready queue, group unacquired chunks.
 - Claude Code adapter + hooks.
 - Ask/answer at the hub: `blizzard ask` parks the chunk (`waiting_on_human`); `blizzard answer` resumes the dormant session with the answer.
 - Escalation via printed resume commands.
 
 ## milestone:centralized-hub — the control plane beyond the local environment
 
-Epics: `epic:hub` (remote slice), `epic:board`, `epic:ask-answer` (remote slice), `epic:chat`.
+Epics: `epic:hub` (remote slice), `epic:board` (remote slice), `epic:ask-answer` (remote slice), `epic:chat`.
 
 Enable the control plane beyond the local environment, and the spokes out of the hub: the hub runs centrally, and the spokes fan out from it — remote runners, the board, the chat bot, remote ask/answer. The execution core built in `milestone:mvp` goes untouched. (Multi-*operator* semantics are not this milestone — that is `epic:team`, unscheduled.)
 
 - **Remote hub** — `epic:hub` (remote slice): run `blizzard-hub` off-machine (VPS / cloud / home server); register multiple runners with one hub. No architectural change — the protocol ships in the MVP (D-022). Eventual-reachability hardening: buffer events locally through hub outages and flush on return.
-- **The board** — `epic:board`: web board — server-rendered page + SSE, phone-friendly PWA; viewer and operator roles (operator control scope is an [open question](../decisions/open-questions.md)).
+- **Remote board** — `epic:board` (remote slice): the MVP's web app goes remote — phone-friendly PWA, viewer and operator roles (operator control scope is an [open question](../decisions/open-questions.md)).
 - **Remote ask/answer** — `epic:ask-answer` (remote slice): asks fan out to the board and notifications; answers flow back from remote clients. (The protocol itself — ask-and-exit, `waiting_on_human`, resume-with-answer, the question row at the hub — ships in the MVP.)
 - **Chat + auth** — `epic:chat`: Telegram bot (D-031) with inline answer buttons; identity & permissioning per the post-MVP spike (D-018) — configurable, authless behind Tailscale locally, OAuth2-class identity for cloud-hosted hubs.
 
@@ -41,4 +42,5 @@ Unscheduled — in any order, and none may change the mvp core's contracts:
 - **Configuration surface** (`epic:config`) — every operational constant in config, with comparable runs for tuning (the workflow YAML ships in the MVP; this is the rest).
 - **OpenCode and Codex adapters** (`epic:adapters`).
 - **Automated CI feedback** (`epic:ci-feedback`) — capped at 2 rounds.
-- **Team mode** (`epic:team`). Multiple operators sharing one fleet: multi-operator policy and shared conventions on top of `milestone:centralized-hub`'s remote hub. Work acquisition stays hub-mediated (D-024) — the hub's chunk model wraps the PM item and the hub's queue arbitrates across machines; a colleague's issue assignment is at most a *reflection* of hub state, never the claim itself. (An earlier draft made forge-native issue assignment the atomic cross-machine claim; D-024 superseded that — the hub is the arbiter.)
+- **PM write-back** — reflecting chunk state and completion to the backing PM item (labels, comments, close on delivery); the MVP writes nothing back (D-047), and the idea is deliberately unexplored so far.
+- **Team mode** (`epic:team`). Multiple operators sharing one fleet: multi-operator policy and shared conventions on top of `milestone:centralized-hub`'s remote hub. Work acquisition stays hub-mediated (D-024) — the hub's chunk model wraps the PM item and the hub's queue arbitrates across machines; a colleague's issue assignment is at most a *reflection* of hub state, never the acquisition itself. (An earlier draft made forge-native issue assignment the atomic cross-machine acquisition; D-024 superseded that — the hub is the arbiter.)

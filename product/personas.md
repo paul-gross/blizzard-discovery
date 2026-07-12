@@ -22,9 +22,9 @@ The agentic-native engineer this project is being built by and for. Has the tech
 
 ## `persona:product-manager` — the product manager
 
-Owns *what gets built and in what order*. Interacts with the fleet exclusively through its two public surfaces: the GitHub backlog going in, and the board coming out. Never touches a harness or an environment.
+Owns *what gets built and in what order*. Interacts with the fleet exclusively through its public surfaces: the GitHub backlog and the hub's web app. Never touches a harness or an environment.
 
-**What they need from blizzard:** filing and labeling an issue is the entire act of scheduling work; priority expressed on the backlog actually steers what the fleet pulls next (GitHub has no per-issue priority, so the hub must implement ordering — an [open question](../decisions/open-questions.md)); the board answers "where is everything?" without asking an engineer.
+**What they need from blizzard:** handing an issue's id to the hub is the entire act of scheduling work (D-047 — the issue itself stays in GitHub, where the backlog already lives); the ready queue's order actually steers what the fleet pulls next, set at the hub through the web app's prioritize control (D-048; the ordering mechanism is an [open question](../decisions/open-questions.md)); and the board answers "where is everything?" without asking an engineer.
 
 **Served by:** the PM-as-backlog truth split ([architecture](../design/architecture.md)), the hub's PM wrapper (D-024, [hub](../design/hub/index.md)), and the board.
 
@@ -48,6 +48,6 @@ The fleet's mechanic. Interested less in any single task's output than in the **
 
 The worker session itself. Blizzard's design quality is largely determined by how little cooperation this persona is *trusted* to provide.
 
-**What they need from blizzard:** an unambiguous claim it cannot accidentally share; a way to ask a human a question without dying for it (`blizzard ask`, ask-and-exit); a way to report a verdict that will be believed; heartbeating that costs it nothing (emitted as a side effect of tool use — no self-reporting).
+**What they need from blizzard:** an unambiguous lease it cannot accidentally share; a way to ask a human a question without dying for it (`blizzard ask`, ask-and-exit); a way to report a verdict that will be believed; heartbeating that costs it nothing (emitted as a side effect of tool use — no self-reporting).
 
-**Served by:** atomic claims and epochs ([concurrency-model](../design/concurrency-model.md)), the `PostToolUse` heartbeat and fail-safe verdicts ([supervisor](../design/runner/loop.md)), ask-and-exit ([ask-answer](../design/ask-answer.md)).
+**Served by:** atomic leases and epochs ([concurrency-model](../design/concurrency-model.md)), the `PostToolUse` heartbeat and fail-safe verdicts ([supervisor](../design/runner/loop.md)), ask-and-exit ([ask-answer](../design/ask-answer.md)).

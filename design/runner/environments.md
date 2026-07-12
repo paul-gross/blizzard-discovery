@@ -26,14 +26,14 @@ The ephemeral-vs-pooled distinction lives entirely below the seam. The runner co
 
 A chunk that crashes mid-work leaves its environments mid-surgery: half-finished branches, uncommitted files, dirty db rows, orphaned services. Reset-on-release can be **skipped by exactly that crash** — the cleanup step dies with the process that owed it. Reset-on-acquire cannot be skipped: it runs at the start of the next lease, it is idempotent, and it erases whatever corpse the previous holder left, however it died. Cleaning is therefore always on the acquiring side of the boundary, which is also why the contract states cleanliness as a property of `acquire` rather than as a verb.
 
-## Leasing: environments use the claim machinery
+## Environments ride the node-step lease
 
-An environment binding is not a new mechanism — it rides the chunk's existing claim:
+An environment binding is not a new mechanism — it rides the chunk's existing lease:
 
-- The binding `(chunk → env ids)` is a **runner-store fact**, written in the same transaction that claims the chunk.
-- The lease lifetime is the chunk's claim lifetime: the claim's heartbeat and epoch cover its environments. There is no separate env heartbeat.
-- **REAP frees environments** the same way it frees chunks: when a claim is reaped, its bindings are released back to the provider, and the (dirty) environments are safe precisely because of reset-on-acquire.
-- **All-or-nothing acquisition.** A chunk needing 3 envs when only 2 are free does not take 2 and wait — it doesn't claim at all (FILL releases the claim and skips it that tick). No partial holds means no hold-and-wait, which means **no deadlock** between agents competing for environments, structurally.
+- The binding `(chunk → env ids)` is a **runner-store fact**, written in the same transaction that mints the chunk's lease.
+- The binding's lifetime is the lease's lifetime: the lease's heartbeat and epoch cover its environments. There is no separate env heartbeat.
+- **REAP frees environments** the same way it frees chunks: when a lease is reaped, its bindings are released back to the provider, and the (dirty) environments are safe precisely because of reset-on-acquire.
+- **All-or-nothing acquisition.** A chunk needing 3 envs when only 2 are free does not take 2 and wait — it doesn't lease at all (FILL releases the lease and skips it that tick). No partial holds means no hold-and-wait, which means **no deadlock** between agents competing for environments, structurally.
 
 One consequence worth stating: because only `blizzard-runner` drives environment lifecycle (acquire, release — one loop, one tick at a time), env operations are naturally serialized. Under the winter binding, the shared git object store never sees two concurrent worktree surgeries from the fleet.
 

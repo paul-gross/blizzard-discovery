@@ -2,13 +2,13 @@
 
 The runner's embedded database: a sqlite (WAL) database **inside `blizzard-runner`**, which is its only reader and writer (D-023). It is an implementation detail of the runner, not a component anyone talks to — worker hooks and humans reach the runner's local API through the `blizzard` CLI (verb table in [contracts.md](./contracts.md)), and the daemon reaches the store in-process, so the schema stays private.
 
-The store holds exactly the machine-local fast path in the [division of truth](../architecture.md#division-of-truth): claims, leases, heartbeats, epochs, pids, and env bindings. Everything fleet-visible lives at the hub (D-022/D-024); claim facts are both — minted and leased here, reported to the hub as the fence's input (D-044).
+The store holds exactly the machine-local fast path in the [division of truth](../architecture.md#division-of-truth): leases, heartbeats, epochs, pids, and env bindings. Everything fleet-visible lives at the hub (D-022/D-024); lease facts are both — minted and leased here, reported to the hub as the fence's input (D-044).
 
 ## Why sqlite
 
-The claim protocol needs an atomic compare-and-set, and sqlite gives it for free:
+The store needs atomic, durable, queryable writes behind a single daemon — sqlite gives all three for free:
 
-- **Atomic claims.** A claim is a single `UPDATE ... WHERE unclaimed` statement. ACID CAS comes out of the box — no hand-rolled locking, no read-modify-write window.
+- **Atomic, crash-safe writes.** A lease is a single `UPDATE ... WHERE unleased` statement, so it either happens or does not — no read-modify-write window, no half-written row a crash-restart must reconcile. The atomicity buys *self-consistency and idempotency*, not race arbitration: the runner is the sole writer on its machine (D-023), so there is no rival to beat. Cross-machine exactly-once is arbitrated by the hub's acquisition (D-024/D-049), not here — see the alternatives table below.
 - **Crash durability.** WAL mode gives durable writes that survive a hard crash.
 - **Queryability.** `blizzard status`'s machine-local view is a `SELECT`. State is inspectable with ordinary SQL, which makes the derived-status model practical.
 
@@ -21,13 +21,13 @@ sqlite runs in WAL mode. It is more than sufficient behind a single owning daemo
 | Flat JSON + `flock` (as in claude_code_agent_farm) | You hand-roll atomicity. sqlite already provides ACID CAS; there is no reason to reimplement it on top of a lock file. |
 | Redis / Postgres | A separate database server is overkill: the runner daemon already exists, and sqlite embeds in it with no extra process to operate. |
 | Git-native (gnap-style) | Too slow for second-granularity heartbeats — a git commit per heartbeat does not scale to the tick rate. |
-| GitHub issue assignment as the claim | GitHub's rate limits do not fit second-granularity heartbeats — and issue assignment is not the claim at any level: cross-machine arbitration is the hub's queue (D-024); assignment is at most a reflection of hub state. |
+| GitHub issue assignment as the lease | GitHub's rate limits do not fit second-granularity heartbeats — and issue assignment is not the lease at any level: cross-machine arbitration is the hub's queue (D-024); assignment is at most a reflection of hub state. |
 
 ## What it records
 
 Per the fleet-wide [facts-only principle](../architecture.md#store-facts-derive-status), the store records only things that definitely happened at a definite time:
 
-- claim created
+- lease created
 - environment binding (chunk → env ids, from the workspace provider)
 - pid + process start time
 - last heartbeat
@@ -41,4 +41,4 @@ A chunk's *status* — running, stalled, waiting-on-human, done, failed — is n
 
 ## Epochs (fencing tokens)
 
-Each claim carries an incrementing **epoch**, minted here and reported to the hub with the claim fact (D-044). Transition submission carries it, and the hub rejects anything stale (D-007/D-036). A reaped-but-still-running agent therefore cannot clobber its successor's work: the successor claimed with a newer epoch, and the zombie's submission is fenced out. See [concurrency-model.md](../concurrency-model.md) for the general fencing model.
+Each lease carries an incrementing **epoch**, minted here and reported to the hub with the lease fact (D-044). Transition submission carries it, and the hub rejects anything stale (D-007/D-036). A reaped-but-still-running agent therefore cannot clobber its successor's work: the successor leased with a newer epoch, and the zombie's submission is fenced out. See [concurrency-model.md](../concurrency-model.md) for the general fencing model.

@@ -23,15 +23,15 @@ It emits a structured plan of **execution units**, each of the shape:
   rationale: ... }
 ```
 
-## The unit is the claimable thing
+## The unit is the acquirable thing
 
-The **execution unit** replaces the individual task as the atomic claimable object. Claiming a `flurry` unit **atomically claims all of its member tasks in one transaction** — the batch is all-or-nothing at claim time, so no other worker can pick off a member mid-batch.
+The **execution unit** replaces the individual task as the atomic acquirable object. Acquiring a `flurry` unit **atomically acquires all of its member tasks in one transaction** — the batch is all-or-nothing at acquire time, so no other worker can pick off a member mid-batch.
 
 ## A deterministic validator gates every plan
 
 The planner can be wrong in judgment but **never in arithmetic**, because a deterministic validator gates every plan it emits. The validator checks:
 
-- every task id exists and is unclaimed;
+- every task id exists and is unacquired;
 - no task appears in two units;
 - unit sizes are within the caps;
 - each unit's requested environment count is within the cap the workspace provider can satisfy;

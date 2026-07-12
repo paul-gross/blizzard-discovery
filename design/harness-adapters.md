@@ -38,7 +38,7 @@ The richest deterministic hook surface:
 
 - **`PreToolUse`** — can deny a tool call with feedback to the agent (this is where per-call gating of singleton resources can live).
 - **`PostToolUse`** — emits the heartbeat (progress detection with no agent cooperation; see [runner/loop.md](./runner/loop.md)).
-- **`SessionEnd`** — releases the claim.
+- **`SessionEnd`** — releases the lease.
 - **`SessionStart`** — injects context at the top of a session.
 
 Session handling: `--session-id` pre-assigns the id at spawn; `claude --resume <id>` is the **interactive** human takeover; `claude -p --resume` is the **automated** follow-up. Never run two processes against one session — always kill first.
@@ -71,7 +71,7 @@ Once the adapter interface is uniform, mixing harnesses costs nothing:
 
 Every harness exposes an interactive resume, and escalation hands the human the exact command to run.
 
-A chunk that fails twice or gets stuck escalates as `needs-human` (the hub reflects that state to the PM item — the runner never touches PM labels, D-024), and the escalation record carries the **literal takeover command**, for example:
+A chunk that fails twice or gets stuck escalates as `needs-human` — a hub-recorded state; nothing is written to the PM item (D-047) — and the escalation record carries the **literal takeover command**, for example:
 
 ```
 cd <env> && claude --resume <session-id>

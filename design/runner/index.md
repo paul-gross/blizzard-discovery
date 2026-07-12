@@ -8,7 +8,7 @@ Responsibilities, in one pass: acquire ready chunks from the hub (D-024 — neve
 |----------|----------------|
 | [store.md](./store.md) | The embedded database: why sqlite, what it records, epochs — the runner's private state behind the local API. |
 | [loop.md](./loop.md) | The reconciliation loop — REAP / PULL / FILL / ADVANCE — crash recovery, idempotency, verdicts, operator controls. |
-| [environments.md](./environments.md) | The environment model: opaque env ids, the workspace-seam contract sketch, reset-on-acquire, leasing via the claim, the three capacities, worked winter and plain-git bindings. |
+| [environments.md](./environments.md) | The environment model: opaque env ids, the workspace-seam contract sketch, reset-on-acquire, environments riding the lease, the three capacities, worked winter and plain-git bindings. |
 | [contracts.md](./contracts.md) | Every API surface the runner speaks — local API, workspace provider, harness adapter, hub, operator — tracked as explicit contracts with maturity markers. |
 
 Context above this component: [the architecture map](../architecture.md) for how the runner sits among the other pieces and the facts-only principle its store follows; [harness-adapters.md](../harness-adapters.md) for the adapter interface it drives.

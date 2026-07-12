@@ -8,11 +8,11 @@ What actually runs, where it runs, and how the pieces talk to each other. Each p
 |-------|-----------|
 | [**`blizzard-hub`**](#blizzard-hub) | the work orchestrator: PM binding, queue, workflow record, artifacts, asks, the merge queue — HTTP API + SSE (D-022/D-024/D-030) |
 | [**`blizzard-runner`**](#blizzard-runner) | the supervisor: a stateless reconciliation loop behind a local API, advancing chunks through the workflow graph |
-| [**workers**](#workers) | the harness processes doing the work (`claude -p …`), one per claimed chunk's node-step |
+| [**workers**](#workers) | the harness processes doing the work (`claude -p …`), one per leased chunk's node-step |
 | [**`blizzard` CLI**](#blizzard-cli) | a pure client of the daemons' APIs (`heartbeat`, `ask`, `answer`, `status`, …) |
 | [**workflow graphs**](#workflow-graphs) | hub-configured YAML: the node graph every chunk travels (D-025) |
 | [**workspace provider**](#workspace-provider) | allocates clean environments by opaque **environment id** (D-021) |
-| [**board / chat bot**](#board--chat-bot) | fleet visibility, question answering, and limited operator controls |
+| [**web app / chat bot**](#web-app--chat-bot) | fleet observability, queue shaping (prioritize / group), question answering, operator controls |
 
 ### `blizzard-hub`
 
@@ -46,9 +46,9 @@ Runs as short-lived invocations. A pure client: local verbs hit the runner's loc
 
 Allocates clean environments by opaque environment id: a plain binding mints `feature-{work-tag}` worktrees, the winter binding hands out its existing envs (alpha, beta, …). Runs as an invoked binary, one binding per runner (D-019). Talks to the filesystem / git. Deep dive: [runner/environments.md](./runner/environments.md).
 
-### board / chat bot
+### web app / chat bot
 
-Run as web clients of the hub (`milestone:centralized-hub`): the board for visibility and limited operator controls, the Telegram bot (D-031) for one-tap answers. Talk to the hub only — never a runner. Deep dive: [hub/](./hub/index.md).
+Web clients of the hub. The hub-served **web app** runs from the MVP (D-048): fleet observability plus queue shaping — prioritize the ready queue, group unacquired chunks; its remote slice (PWA reach, viewer/operator roles) and the Telegram bot (D-031, one-tap answers) arrive with `milestone:centralized-hub`. Talk to the hub only — never a runner. Deep dive: [hub/web-app.md](./hub/web-app.md).
 
 ## Inside one runner machine
 
@@ -58,7 +58,7 @@ Run as web clients of the hub (`milestone:centralized-hub`): the board for visib
 │   ┌──────────────────────────────────────────┐             ┌───────────────────────────────────┐ │
 │   │ blizzard-runner                          │             │ workers                           │ │
 │   │ (daemon under systemd)                   │ spawn / kill│                                   │ │
-│   │                                          │────────────▶│ one harness process per claimed   │ │
+│   │                                          │────────────▶│ one harness process per leased   │ │
 │   │ tick: REAP → PULL → FILL                 │(via adapter)│ chunk, working in the chunk's     │ │
 │   │       → ADVANCE                          │             │ leased env ids                    │ │
 │   │                                          │             │                                   │ │
@@ -92,10 +92,10 @@ Run as web clients of the hub (`milestone:centralized-hub`): the board for visib
 
 ## The runner↔hub topology (mvp colocated, team remote)
 
-The separation exists from `milestone:mvp` (D-022): the runner always reaches the hub through the same outbound-only protocol. In the solo MVP setup the hub simply runs on the runner machine; moving it to a VPS, and adding more runners — and the board and chat clients — arrive with `milestone:centralized-hub`, changing nothing architecturally.
+The separation exists from `milestone:mvp` (D-022): the runner always reaches the hub through the same outbound-only protocol. In the solo MVP setup the hub simply runs on the runner machine and serves its web app to a local browser (D-048); moving it to a VPS, and adding more runners — and the web app's remote reach and the chat bot — arrive with `milestone:centralized-hub`, changing nothing architecturally.
 
 ```text
-   board (web PWA)                 chat bot (one-tap answers)
+   web app (browser / PWA)         chat bot (one-tap answers)
                 ▲                             ▲
                 │         HTTP + SSE          │
                 └──────────────┬──────────────┘
@@ -125,7 +125,7 @@ The diagrams encode rules that hold everywhere:
 - **The runner store and the hub are different stores, and both exist from the MVP (D-022).** See the [division of truth](#division-of-truth) below. Wire-level protocol details are an [open question](../decisions/open-questions.md).
 - **Environments are opaque ids.** The runner asks the workspace provider to acquire; it gets back an id (`feature-x7`, `alpha`, …), records the chunk→env binding as a fact in its store, and reports the route (chunk → runner → workspace → env) to the hub. An acquired environment is clean by contract (D-021).
 - **Workers never talk to the hub.** Only the runner does, outbound-only. A worker's world is its environment, its hooks, and the CLI.
-- **Humans plug in at three places:** the hub (`blizzard status` / `blizzard answer` — in the MVP, answering a question means going to the hub), session takeover (the pasted resume command), and — once the board and chat bot exist (`milestone:centralized-hub`) — the remote clients.
+- **Humans plug in at three places:** the hub (`blizzard status` / `blizzard answer`, and the web app's observability and queue shaping — D-048; in the MVP, answering a question means going to the hub), session takeover (the pasted resume command), and — from `milestone:centralized-hub` — the remote clients: the board's PWA reach and the chat bot.
 - **Every external system sits behind a seam** (D-016): the work source (at the hub, D-024), the workspace provider, the harness, delivery (the deliver node's binding), and the human channel are all interfaces with the reference stack (GitHub, winter, Claude Code) as first bindings.
 
 ## Division of truth
@@ -133,8 +133,8 @@ The diagrams encode rules that hold everywhere:
 Three tiers of truth, cleanly separated (D-022/D-024):
 
 - **The PM system owns _what work is defined_** — the backing backlog (GitHub issues in the reference binding). Durable, shared, already where work is tracked.
-- **The hub owns _the fleet's view of that work_** — chunks wrapping the PM items, workflow position, judgements, artifacts, questions, routes. Runners never talk to the PM system; the hub's PM binding ingests ready items and reflects state back.
-- **The runner store owns _this machine's execution right now_** — leases, heartbeats, pids, env bindings, and the minting of claims. Fast, local, second-granular. Claim facts (chunk, epoch, runner) are the one thing that travels (D-044): each mint is reported to the hub, whose epoch fence and reassignment floor consume them; everything else never leaves the box.
+- **The hub owns _the fleet's view of that work_** — chunks wrapping the PM items, workflow position, judgements, artifacts, questions, routes. Runners never talk to the PM system; the hub's PM binding ingests specific items by id and serves their contents pass-through (D-047) — nothing is written back to the PM item in the MVP.
+- **The runner store owns _this machine's execution right now_** — leases, heartbeats, pids, env bindings, and the minting of leases. Fast, local, second-granular. Lease facts (chunk, epoch, runner) are the one thing that travels (D-044): each mint is reported to the hub, whose epoch fence and reassignment floor consume them; everything else never leaves the box.
 
 The runner's PULL step (see [runner/loop.md](./runner/loop.md)) exchanges state between the lower two tiers: chunks and answers come down, transitions, artifacts, and questions go up.
 
@@ -144,4 +144,4 @@ The schema principle governing **both** daemons' stores — adopted deliberately
 
 > Store only durable **facts**. **Status is always derived** by query, never written as a column.
 
-A fact is a thing that definitely happened at a definite time — a claim created, a heartbeat received, a transition recorded, a verdict parsed. A chunk's *status* — running, stalled, waiting-on-human, done, failed — is computed from facts, never stored. **Written status lies after a crash:** a process that wrote "running" and then died leaves a database that claims it is running forever. A status *derived* from "last heartbeat was 20 minutes ago and the pid is dead" tells the truth no matter how the process ended. This single decision is what makes crash recovery correct rather than aspirational (D-004).
+A fact is a thing that definitely happened at a definite time — a lease created, a heartbeat received, a transition recorded, a verdict parsed. A chunk's *status* — running, stalled, waiting-on-human, done, failed — is computed from facts, never stored. **Written status lies after a crash:** a process that wrote "running" and then died leaves a database that reports it is running forever. A status *derived* from "last heartbeat was 20 minutes ago and the pid is dead" tells the truth no matter how the process ended. This single decision is what makes crash recovery correct rather than aspirational (D-004).

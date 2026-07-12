@@ -4,11 +4,13 @@ Running many agents at once is a concurrency problem, but it is not a single con
 
 ## Three distinct concurrency problems
 
-### 1. Work assignment — atomic claims in the runner store
+### 1. Work assignment — the only real race is at the hub
 
-Many workers must draw from one pool of work without two of them ever holding the same chunk. The hub owns the queue of ready chunks (D-024); a runner acquires chunks from it and **claims** one for each worker it spawns — workers never claim for themselves. A claim is an atomic compare-and-set in the runner store: the chunk transitions from *unclaimed* to *claimed* in a single atomic step, and exactly one claimant wins any race. A claim's scope is **one node-step execution attempt** (D-035): one claim, one worker tenure, one fresh epoch — consecutive node-steps of a runner-sticky chunk (D-027) run under successive local claims, and a parked chunk holds no live claim at all.
+Many workers must draw from one pool of work without two of them ever holding the same chunk — but that race is resolved in exactly one place, and it is not the runner store. The hub owns the queue of ready chunks and grants each to **exactly one runner** (D-024); that **acquisition** is the sole genuine contention in the system, because separate runner machines are the only rivals that can ever compete for the same chunk. Fleet exactly-once is upheld there.
 
-Claims are **TTL leases with heartbeats**, not permanent assignments. A worker that dies holding a claim does not hold it forever — the lease expires when its heartbeat goes stale, and the chunk returns to the pool.
+A runner then **leases** each acquired chunk's node-step for a worker slot it spawns — workers never lease for themselves. This local lease is *not* a contended CAS: a runner is a single-writer daemon (D-023) with no rival on its own machine, so moving a node-step from *unleased* to *leased* is crash-safe, idempotent bookkeeping, not a race anyone can lose. A lease's scope is **one node-step execution attempt** (D-035): one lease, one worker tenure, one fresh epoch — consecutive node-steps of a runner-sticky chunk (D-027) run under successive local leases, and a parked chunk holds no live lease at all.
+
+A lease is a **TTL lease with heartbeats**, not a permanent assignment. A worker that dies holding one does not hold it forever — the lease expires when its heartbeat goes stale, and the node-step is retried under a fresh lease and epoch. What stops a *reaped-but-still-alive* worker from clobbering its successor is not runner-local mutual exclusion — there is no rival on the machine to exclude — but the **fencing epoch checked at the hub** (below): the successor leased with a newer epoch, and the zombie's stale submission is rejected.
 
 ### 2. Workspace isolation — already solved below the workspace seam
 
@@ -32,11 +34,11 @@ A lease is a last resort for the handful of resources that are irreducibly singl
 
 ## Leases, TTL, heartbeat, fencing
 
-The lease mechanics are uniform across chunk claims and singleton resources:
+The lease mechanics are uniform across chunk leases and singleton resources:
 
-- **TTL lease** — a claim or an acquisition is valid only for a bounded time.
+- **TTL lease** — a lease or an acquisition is valid only for a bounded time.
 - **Heartbeat** — the holder renews the lease periodically by proving it is still alive and making progress. A stale heartbeat is the signal that the holder is gone.
-- **Fencing tokens (epochs)** — each claim carries a monotonically incrementing **epoch**, minted per node-step (D-035). Transition submission — which carries the step's artifacts in the same atomic write (D-036) — and the hub's deliver node check the epoch before they act. A holder that was reaped as dead but is in fact still running (a zombie) carries an old epoch, and its submission is rejected — so a reaped-but-still-running worker can never clobber the work of the successor that took over its chunk. This is the classic fencing-token guard against the split-brain that heartbeats alone cannot prevent.
+- **Fencing tokens (epochs)** — each lease carries a monotonically incrementing **epoch**, minted per node-step (D-035). Transition submission — which carries the step's artifacts in the same atomic write (D-036) — and the hub's deliver node check the epoch before they act. A holder that was reaped as dead but is in fact still running (a zombie) carries an old epoch, and its submission is rejected — so a reaped-but-still-running worker can never clobber the work of the successor that took over its chunk. This is the classic fencing-token guard against the split-brain that heartbeats alone cannot prevent.
 
 ## The delivery lane: the hub's merge queue (D-030)
 

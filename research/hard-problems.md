@@ -6,7 +6,7 @@ Studying Agent Orchestrator surfaced four problems that any serious fleet has to
 
 **The problem.** A process that writes its own status and then dies leaves a database that lies — it says "running" forever.
 
-**The answer.** Facts-only schema with status **derived** from those facts, from day one. The stores — the runner store and the hub — record only durable facts (claim created, pid + start time, last heartbeat, verdict, ...); status is a query, never a column. A status derived from "last heartbeat 20 minutes ago, pid dead" tells the truth regardless of how the process ended. See [../design/architecture.md](../design/architecture.md).
+**The answer.** Facts-only schema with status **derived** from those facts, from day one. The stores — the runner store and the hub — record only durable facts (lease created, pid + start time, last heartbeat, verdict, ...); status is a query, never a column. A status derived from "last heartbeat 20 minutes ago, pid dead" tells the truth regardless of how the process ended. See [../design/architecture.md](../design/architecture.md).
 
 ## 2. CI / review feedback loop
 

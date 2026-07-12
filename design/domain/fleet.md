@@ -29,7 +29,7 @@ A runner's connection is outbound-only (D-012), and `workspace_id` names which p
 
 **liveness** is never a stored column (D-004): `last_seen_at` against a staleness threshold yields online/offline for the board. It is distinct from the worker tool-call heartbeat, which is a runner-store fact and never leaves the machine.
 
-**`paused`** is the operator's brake (D-043): pause/resume facts append and the flag derives, exactly as a graph's enabled-ness does (D-039). The runner reads its own state on its outbound pull and adheres to it — pausing stops new claims, in-flight chunks run to completion ([loop.md](../runner/loop.md)) — never a push into the dev box (D-012). Post-MVP controls (routing pins) take the same declarative shape; there is no directive queue.
+**`paused`** is the operator's brake (D-043): pause/resume facts append and the flag derives, exactly as a graph's enabled-ness does (D-039). The runner reads its own state on its outbound pull and adheres to it — pausing stops new leases, in-flight chunks run to completion ([loop.md](../runner/loop.md)) — never a push into the dev box (D-012). Post-MVP controls (routing pins) take the same declarative shape; there is no directive queue.
 
 ## Event
 

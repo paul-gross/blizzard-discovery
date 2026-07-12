@@ -11,7 +11,7 @@ A chunk's artifacts live in an **append-only, versioned key-value store** (D-036
 ```
 
 - **Written with the transition, atomically.** A node-step's artifacts are committed in the same epoch-fenced write as its transition ([work.md](./work.md)) — there is no separate artifact submission. A rejected (stale-epoch) transition's artifacts never enter the store; a gate's artifacts arrive on its open **Decision** (D-045), the gate's counterpart of a transition.
-- **Append, never overwrite.** Re-running a node adds new entries under its new claim's epoch (one claim per node-step attempt, D-035); earlier entries remain as history.
+- **Append, never overwrite.** Re-running a node adds new entries under its new lease's epoch (one lease per node-step attempt, D-035); earlier entries remain as history.
 - **Read = latest wins.** Fetching `{artifact-name}` resolves to the entry with the highest epoch — e.g. `build.review-findings.23` shadows `build.review-findings.17` without deleting it.
 - **`{node}` is the node *name*, not the `node_id`.** The name is the cross-version correlator ([graph.md](./graph.md)): after a migration, a re-run of `build` keeps appending to the same `build.*` series. The exact producing node is on the artifact itself (`produced_by.node_id`).
 
@@ -44,9 +44,9 @@ The domain model is a **discriminated union**: an interchangeable `(type, …)` 
 |----------|-------|
 | `content` | Text (a review's findings, a spike write-up) or an arbitrary blob — size limits and blob storage are an [open question](../../decisions/open-questions.md). |
 
-There is no artifact-level epoch (D-036): the fence is checked once, on the transition that commits the artifacts — the epoch in the store key is that transition's claim epoch, not a fencing field of the artifact.
+There is no artifact-level epoch (D-036): the fence is checked once, on the transition that commits the artifacts — the epoch in the store key is that transition's lease epoch, not a fencing field of the artifact.
 
-**`produced_by`** carries the owning `chunk_id`, the exact **`node_id`** ([graph.md](./graph.md) — unique across all graphs, unlike the store key's `{node}` component, which is the node *name*), and the producing claim's `epoch`: one claim per node-step attempt (D-035), so the epoch disambiguates re-runs. The overlap with the store key cannot drift: artifact and KV entry land in the same atomic transition write (D-036).
+**`produced_by`** carries the owning `chunk_id`, the exact **`node_id`** ([graph.md](./graph.md) — unique across all graphs, unlike the store key's `{node}` component, which is the node *name*), and the producing lease's `epoch`: one lease per node-step attempt (D-035), so the epoch disambiguates re-runs. The overlap with the store key cannot drift: artifact and KV entry land in the same atomic transition write (D-036).
 
 **`commit_hash`** pins the state that was actually verified: branches move, so the hash accompanies the branch name in every git-commit artifact. The hub stores the reference, never the code (D-012). A chunk touching five repos submits five git-commit artifacts.
 

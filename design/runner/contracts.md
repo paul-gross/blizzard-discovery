@@ -10,11 +10,11 @@ Transport: `blizzard <verb>` (D-020) as a pure client of the runner's local API 
 
 | Operation | In | Out | Notes |
 |-----------|-----|-----|-------|
-| `blizzard claim` | runner id | chunk `{chunk_id, node, envs_wanted}` or nothing | Atomic CAS over the chunks acquired from the hub; epoch minted. One claim per node-step execution attempt (D-035). Runner-internal. |
-| `blizzard bind` | chunk id, env ids | ack | Records the chunk→env binding fact (D-021), same transaction discipline as claim. |
-| `blizzard heartbeat` | claim id | ack | Also invoked by worker hooks on every tool call. |
-| `blizzard release` | claim id, reason | ack | Normal completion, requeue, or escalation. |
-| `blizzard reap` | — | expired claims | Pid + process-start-time check; retry-or-escalate policy applied. |
+| `blizzard lease` | runner id | chunk `{chunk_id, node, envs_wanted}` or nothing | Atomic CAS over the chunks acquired from the hub; epoch minted. One lease per node-step execution attempt (D-035). Runner-internal. |
+| `blizzard bind` | chunk id, env ids | ack | Records the chunk→env binding fact (D-021), same transaction discipline as lease. |
+| `blizzard heartbeat` | lease id | ack | Also invoked by worker hooks on every tool call. |
+| `blizzard release` | lease id, reason | ack | Normal completion, requeue, or escalation. |
+| `blizzard reap` | — | expired leases | Pid + process-start-time check; retry-or-escalate policy applied. |
 | `blizzard status` | filters | derived state (JSON) | A `SELECT`; never a stored status column (D-004). Machine-local view — fleet-wide status is a hub query. |
 | `blizzard ask` / `blizzard answer` | question / answer | ack | Ask-and-exit protocol (D-010, D-015); the runner forwards asks to the hub, where the question row lives. |
 | `blizzard selftest` | harness | pass/fail | Adapter-drift canary. |
@@ -42,7 +42,7 @@ Open details: capacity signaling (refuse-on-acquire vs queryable free-count), en
 
 ## 4. Hub ↔ Work source (PM binding) · **open** — not a runner contract
 
-Moved hub-side by D-024: the PM binding (GitHub issues + labels in the reference stack) plugs into the hub, which ingests ready items into chunks and reflects workflow state and completion back. Runners never speak to the PM system. Tracked here only so the wheel stays complete; the contract's owner is [hub/index.md](../hub/index.md), and its shape is blocked on the PM-ingestion and chunk-identity open questions.
+Moved hub-side by D-024: the PM binding (GitHub issues in the reference stack) plugs into the hub, which ingests specific items by id into chunks and serves their contents pass-through — no write-back in the MVP (D-047). Runners never speak to the PM system. Tracked here only so the wheel stays complete; the contract's owner is [hub/index.md](../hub/index.md); the intake surface and pointer scheme are tracked in the PM-ingestion and chunk-identity open questions.
 
 ## 5. Runner ↔ Hub · **draft** (from the MVP, colocated in the solo setup — D-022; protocol in [hub/index.md](../hub/index.md))
 
@@ -52,13 +52,13 @@ All connections outbound from the runner (D-012); the hub is eventually-reachabl
 |-----------|-----------|-------|
 | register | runner → hub | runner id + workspace id; makes the runner visible on the board. |
 | acquire chunks | runner → hub | ready chunks with their **node envelopes** (prompt, node config, relevant artifacts) — the PULL step (D-024). |
-| transition record | runner → hub | judgement + node transition + the step's artifacts, one atomic write (D-027, D-036): git-commit artifacts pushed to the forge first (D-026); idempotent; carries the claim's epoch — the hub rejects stale ones (D-007/D-030). |
-| event push | runner → hub | claims, routes ("chunk C, runner R, workspace W, env E" — D-021), verdicts, questions; batched, durable rows. |
+| transition record | runner → hub | judgement + node transition + the step's artifacts, one atomic write (D-027, D-036): git-commit artifacts pushed to the forge first (D-026); idempotent; carries the lease's epoch — the hub rejects stale ones (D-007/D-030). |
+| event push | runner → hub | leases, routes ("chunk C, runner R, workspace W, env E" — D-021), verdicts, questions; batched, durable rows. |
 | answer / state pull | hub → runner (over the runner's outbound poll/SSE) | delivered answers, plus the runner's declarative operational state — `paused` now, routing knobs post-MVP (D-043). |
 
 ## 6. Operator ↔ Runner · **open**
 
-Named capabilities (loop.md): pause (stop new claims, drain in-flight), start, and work selection — filter or pin what FILL may claim. Unshaped: whether these are `blizzard` verbs against the runner's local API, runner config reloads, or hub-relayed controls (all three may coexist; the local path must keep working while the hub is unreachable).
+Named capabilities (loop.md): pause (stop new leases, drain in-flight), start, and work selection — filter or pin what FILL may lease. Unshaped: whether these are `blizzard` verbs against the runner's local API, runner config reloads, or hub-relayed controls (all three may coexist; the local path must keep working while the hub is unreachable).
 
 ## 7. Delivery · **open** — not a runner contract since D-030
 
