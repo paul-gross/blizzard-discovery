@@ -1,4 +1,4 @@
-# winter-blizzard
+# blizzard-discovery
 
 Codename **blizzard**: an interoperable orchestration platform for autonomous fleets of coding agents.
 
