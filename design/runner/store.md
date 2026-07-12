@@ -10,7 +10,7 @@ The store needs atomic, durable, queryable writes behind a single daemon — sql
 
 - **Atomic, crash-safe writes.** A lease is a single `UPDATE ... WHERE unleased` statement, so it either happens or does not — no read-modify-write window, no half-written row a crash-restart must reconcile. The atomicity buys *self-consistency and idempotency*, not race arbitration: the runner is the sole writer on its machine (D-023), so there is no rival to beat. Cross-machine exactly-once is arbitrated by the hub's acquisition (D-024/D-049), not here — see the alternatives table below.
 - **Crash durability.** WAL mode gives durable writes that survive a hard crash.
-- **Queryability.** `blizzard status`'s machine-local view is a `SELECT`. State is inspectable with ordinary SQL, which makes the derived-status model practical.
+- **Queryability.** `blizzard runner status`'s machine-local view is a `SELECT`. State is inspectable with ordinary SQL, which makes the derived-status model practical.
 
 sqlite runs in WAL mode. It is more than sufficient behind a single owning daemon — which is exactly how it is deployed on both sides (D-023): embedded in the runner for the fast path, embedded in `blizzard-hub` for the fleet facts (see [the hub store](../hub/store.md)).
 

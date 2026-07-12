@@ -32,7 +32,7 @@ Owns *what gets built and in what order*. Interacts with the fleet exclusively t
 
 Owns *whether what was built is right*. The natural first responder for the fleet's product-intent questions and the acceptance check on its output.
 
-**What they need from blizzard:** `blizzard ask` questions about product behavior reach them on their phone with one-tap answers, and their answer demonstrably reaches the agent ("delivered, agent resumed"); finished work is traceable to its originating issue and inspectable at whatever gates are configured — a PR when the review gate is on, the merged diff otherwise.
+**What they need from blizzard:** `blizzard runner ask` questions about product behavior reach them on their phone with one-tap answers, and their answer demonstrably reaches the agent ("delivered, agent resumed"); finished work is traceable to its originating issue and inspectable at whatever gates are configured — a PR when the review gate is on, the merged diff otherwise.
 
 **Served by:** the [ask/answer protocol](../design/ask-answer.md) end to end, the operator role, and the chat bot.
 
@@ -42,12 +42,12 @@ The fleet's mechanic. Interested less in any single task's output than in the **
 
 **What they need from blizzard:** a **configuration-based** system — every operational constant (lease TTL, heartbeat interval, retry cap, tick rate, batch size caps, model/harness routing) lives in config, changeable without touching code; cheap forensics — the facts-only schema means an incident's *lifecycle* is reconstructable by querying what actually happened, with no written-status lies to un-tangle (the agent's *reasoning* lives in transcripts on the runner machine — retention and access are an [open question](../decisions/open-questions.md)); and comparable runs, so a parameter change can be evaluated against real outcome data rather than vibes.
 
-**Served by:** the facts-only schema ([architecture](../design/architecture.md)), `blizzard selftest` and pinned harness versions ([harness-adapters](../design/harness-adapters.md)), the planner's shadow-mode comparison discipline ([planner](../design/planner.md)). The concrete constants are still an [open question](../decisions/open-questions.md) — this persona is the reason they must land in config, not in code.
+**Served by:** the facts-only schema ([architecture](../design/architecture.md)), `blizzard runner selftest` and pinned harness versions ([harness-adapters](../design/harness-adapters.md)), the planner's shadow-mode comparison discipline ([planner](../design/planner.md)). The concrete constants are still an [open question](../decisions/open-questions.md) — this persona is the reason they must land in config, not in code.
 
 ## `persona:fleet-agent` — the fleet agent (non-human)
 
 The worker session itself. Blizzard's design quality is largely determined by how little cooperation this persona is *trusted* to provide.
 
-**What they need from blizzard:** an unambiguous lease it cannot accidentally share; a way to ask a human a question without dying for it (`blizzard ask`, ask-and-exit); a way to report a verdict that will be believed; heartbeating that costs it nothing (emitted as a side effect of tool use — no self-reporting).
+**What they need from blizzard:** an unambiguous lease it cannot accidentally share; a way to ask a human a question without dying for it (`blizzard runner ask`, ask-and-exit); a way to report a verdict that will be believed; heartbeating that costs it nothing (emitted as a side effect of tool use — no self-reporting).
 
 **Served by:** atomic leases and epochs ([concurrency-model](../design/concurrency-model.md)), the `PostToolUse` heartbeat and fail-safe verdicts ([supervisor](../design/runner/loop.md)), ask-and-exit ([ask-answer](../design/ask-answer.md)).

@@ -18,7 +18,7 @@ Everything here is a proposal. Settled choices live in the [decision log](./deci
 
 ## Reading order
 
-For a cold, front-to-back read: **product** (mission → personas → mvp → vision → roadmap; epics and the story map are reference) → **design** (architecture → workflow-engine → concurrency-model → runner → harness-adapters → hub → ask-answer → planner) → **research** → **decisions**. The [glossary](./glossary.md) is a companion throughout.
+For a cold, front-to-back read: **product** (mission → personas → mvp → vision → roadmap; epics and the story map are reference) → **design** (architecture → workflow-engine → concurrency-model → runner → harness-adapters → hub → cli → ask-answer → planner) → **research** → **decisions**. The [glossary](./glossary.md) is a companion throughout.
 
 ## The corpus
 
@@ -47,6 +47,7 @@ The four layers have different lifecycles: product documents should barely chang
 | [design/harness-adapters.md](./design/harness-adapters.md) | The adapter interface, the per-harness comparison, the enforcement wrapper, hooks, and human-takeover flows. |
 | [design/domain/](./design/domain/index.md) | The app-wide domain models — chunk, transition, migration, artifact, question/answer, route, runner, graph — with per-model property tables and the derived status enum. |
 | [design/hub/](./design/hub/index.md) | The hub component: the canonical responsibility list (PM wrapper, workflow record, artifacts, merge queue, registry), the colocated/remote topology, outbound-only runners, the web app and chat clients, the hub store, and the API route table. |
+| [design/cli.md](./design/cli.md) | The `blizzard` CLI: a pure client of the two daemons' APIs — the verb table, the local-vs-fleet dispatch rule, and the takeover/requeue flow. |
 | [design/ask-answer.md](./design/ask-answer.md) | The ask/answer protocol: ask-and-exit, parking, fan-out, first-write-wins answers, resume-with-answer. |
 | [design/planner.md](./design/planner.md) | The LLM work-shaping planner (parked pending the workflow-graph interplay): execution units, the deterministic validator, conflict packing, batch failure semantics, and the rollout ladder. |
 

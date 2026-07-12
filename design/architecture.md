@@ -1,6 +1,6 @@
 # Architecture — the running pieces
 
-What actually runs, where it runs, and how the pieces talk to each other. Each piece has a deep-dive doc; this page is the map. Names per D-020: the app is `blizzard`, the hub daemon is `blizzard-hub`, the runner is `blizzard-runner`.
+What actually runs, where it runs, and how the pieces talk to each other. Each piece has a deep-dive doc; this page is the map. Names per D-020: the app is `blizzard`, the hub daemon is `blizzard-hub`, the runner is `blizzard-runner` — one executable (D-061): the daemons are `host` personalities of the single binary (`blizzard runner host`, `blizzard hub host`), the hyphenated names its aliases.
 
 ## The pieces at a glance
 
@@ -9,7 +9,7 @@ What actually runs, where it runs, and how the pieces talk to each other. Each p
 | [**`blizzard-hub`**](#blizzard-hub) | the work orchestrator: PM binding, queue, workflow record, artifacts, asks, the merge queue — HTTP API + SSE (D-022/D-024/D-030) |
 | [**`blizzard-runner`**](#blizzard-runner) | the supervisor: a stateless reconciliation loop behind a local API, advancing chunks through the workflow graph |
 | [**workers**](#workers) | the harness processes doing the work (`claude -p …`), one per leased chunk's node-step |
-| [**`blizzard` CLI**](#blizzard-cli) | a pure client of the daemons' APIs (`heartbeat`, `ask`, `answer`, `status`, …) |
+| [**`blizzard-cli`**](#blizzard-cli) | a pure client of the daemons' APIs, verbs namespaced by target (`runner heartbeat`, `runner ask`, `hub answer`, `hub status`, …) |
 | [**workflow graphs**](#workflow-graphs) | hub-configured YAML: the node graph every chunk travels (D-025) |
 | [**workspace provider**](#workspace-provider) | allocates clean environments by opaque **environment id** (D-021) |
 | [**web app / chat bot**](#web-app--chat-bot) | fleet observability, queue shaping (prioritize / group), question answering, operator controls |
@@ -34,9 +34,9 @@ Deep dive: [runner/](./runner/index.md).
 
 Run as child processes of the runner, working in the chunk's leased environments on one node-step at a time, primed with the node envelope. Talk to the runner's local API via the CLI (from hooks), and to the code itself. Deep dive: [harness-adapters.md](./harness-adapters.md).
 
-### `blizzard` CLI
+### `blizzard-cli`
 
-Runs as short-lived invocations. A pure client: local verbs hit the runner's local API, fleet verbs hit the hub's HTTP API — the CLI never opens a sqlite file (D-023). Verb table: [runner/contracts.md](./runner/contracts.md).
+Runs as short-lived invocations of the one `blizzard` binary (D-061). A pure client: runner verbs hit the runner's local API, hub verbs hit the hub's HTTP API — the client verbs never open a sqlite file (D-023); the daemons themselves are the same binary's `host` personalities. Deep dive: [cli.md](./cli.md).
 
 ### workflow graphs
 
@@ -125,7 +125,7 @@ The diagrams encode rules that hold everywhere:
 - **The runner store and the hub are different stores, and both exist from the MVP (D-022).** See the [division of truth](#division-of-truth) below. Wire-level protocol details are an [open question](../decisions/open-questions.md).
 - **Environments are opaque ids.** The runner asks the workspace provider to acquire; it gets back an id (`feature-x7`, `alpha`, …), records the chunk→env binding as a fact in its store, and reports the route (chunk → runner → workspace → env) to the hub. An acquired environment is clean by contract (D-021).
 - **Workers never talk to the hub.** Only the runner does, outbound-only. A worker's world is its environment, its hooks, and the CLI.
-- **Humans plug in at three places:** the hub (`blizzard status` / `blizzard answer`, and the web app's observability and queue shaping — D-048; in the MVP, answering a question means going to the hub), session takeover (the pasted resume command), and — from `milestone:centralized-hub` — the remote clients: the board's PWA reach and the chat bot.
+- **Humans plug in at three places:** the hub (`blizzard hub status` / `blizzard hub answer`, and the web app's observability and queue shaping — D-048; in the MVP, answering a question means going to the hub), session takeover (`blizzard runner takeover`, or the pasted resume command), and — from `milestone:centralized-hub` — the remote clients: the board's PWA reach and the chat bot.
 - **Every external system sits behind a seam** (D-016): the work source (at the hub, D-024), the workspace provider, the harness, delivery (the deliver node's binding), and the human channel are all interfaces with the reference stack (GitHub, winter, Claude Code) as first bindings.
 
 ## Division of truth

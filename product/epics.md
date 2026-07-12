@@ -17,7 +17,7 @@ The epics in `milestone:mvp` scope, ordered by build order per the [story map](.
 | `epic:workflow` | The dynamic workflow engine: hub-defined YAML graphs, nodes and judgements, node envelopes, sticky advancement, artifacts (pointers + assets). | [design/workflow-engine.md](../design/workflow-engine.md) |
 | `epic:review` | The default graph's review node: one prompt driving the stack's review engine plus e2e checks before a chunk advances. | [design/workflow-engine.md](../design/workflow-engine.md) |
 | `epic:delivery` | The deliver node, hub-executed (D-030): the merge queue, epoch-fenced submission, merge-to-main baseline, PR mechanics. | [design/workflow-engine.md](../design/workflow-engine.md) |
-| `epic:ask-answer` | Ask-and-exit, `waiting_on_human`, resume-with-answer. Slices: **hub** (`milestone:mvp`: question rows at the hub, `blizzard ask`/`blizzard answer`), **remote** (`milestone:centralized-hub`: fan-out + answers from board/chat clients). | [design/ask-answer.md](../design/ask-answer.md) |
+| `epic:ask-answer` | Ask-and-exit, `waiting_on_human`, resume-with-answer. Slices: **hub** (`milestone:mvp`: question rows at the hub, `blizzard runner ask`/`blizzard hub answer`), **remote** (`milestone:centralized-hub`: fan-out + answers from board/chat clients). | [design/ask-answer.md](../design/ask-answer.md) |
 | `epic:board` | The hub's web front. Slices: **local** (`milestone:mvp`: hub-served web app — fleet observability, ready-queue prioritization, chunk grouping — D-048), **remote** (`milestone:centralized-hub`: PWA reach, viewer/operator roles, auth). | [design/hub/web-app.md](../design/hub/web-app.md) |
 
 ## Post-MVP

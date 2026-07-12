@@ -16,7 +16,7 @@ This is the MVP; [mvp.md](./mvp.md) states its acceptance journey, testable crit
 - Solo execution (one env, one agent per chunk); a chunk wraps one PM item unless grouped by hand in the web app (D-048).
 - The hub-served **web app** (D-048): fleet observability plus queue shaping — reorder the ready queue, group unacquired chunks.
 - Claude Code adapter + hooks.
-- Ask/answer at the hub: `blizzard ask` parks the chunk (`waiting_on_human`); `blizzard answer` resumes the dormant session with the answer.
+- Ask/answer at the hub: `blizzard runner ask` parks the chunk (`waiting_on_human`); `blizzard hub answer` resumes the dormant session with the answer.
 - Escalation via printed resume commands.
 
 ## milestone:centralized-hub — the control plane beyond the local environment

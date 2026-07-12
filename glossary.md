@@ -17,7 +17,7 @@ One line per term, for cold readers and cross-checking harnesses. The owning doc
 | **environment id** | The opaque string naming an execution environment (`alpha`, `feature-x7`), allocated by the workspace provider; the runner↔workspace contract and the routing fact key on it. |
 | **workspace provider** | The per-runner binding of the workspace seam (formerly the "workspace integration link"): allocates/releases environments by id and guarantees an acquired environment is clean (D-021). |
 | **harness** | A coding-agent CLI blizzard drives: Claude Code, OpenCode, or Codex. |
-| **adapter** | The three-function shim (`spawn` / `resume_cmd` / `verdict`) that translates one harness's CLI; deliberately dumb. |
+| **adapter** | The four-function shim (`spawn` / `resume` / `resume_cmd` / `verdict`, D-050) that translates one harness's CLI; deliberately dumb. |
 | **runner store** | The runner's embedded database: a sqlite (WAL) database inside `blizzard-runner`, reached only through the runner's local API via the `blizzard` CLI (D-023/D-028). |
 | **task / PM item** | A unit of backlog work in the backing project-management system (a GitHub issue in the reference binding); ingested by id into a chunk (D-024/D-047). |
 | **PM pointer** | What a chunk holds per wrapped PM item (D-047): a (provider, base URL, remote id) triple the hub composes into a real API call — pass-through reads with hub-held per-vendor credentials; contents are never stored. |
@@ -43,11 +43,12 @@ One line per term, for cold readers and cross-checking harnesses. The owning doc
 | **supervisor** | The stateless deterministic reconciliation loop (systemd): REAP → PULL → FILL → ADVANCE each tick. |
 | **merge queue** | The hub's single-writer delivery lane: the deliver node lands one chunk's branch artifacts at a time, epoch-fenced (D-030). |
 | **escalation / `needs-human`** | A chunk parked for a human after bounded retries, carrying the literal session-resume command. |
+| **takeover** | A human entering a parked chunk's session interactively — `blizzard runner takeover <chunk id>` records the fact and execs the adapter-composed resume command; hand-back is an explicit `blizzard runner requeue` ([design/cli.md](./design/cli.md)). |
 | **hub** | The work-orchestrator daemon (`blizzard-hub`); never holds code or transcripts. The canonical responsibility list lives in [design/hub/index.md](./design/hub/index.md). |
 | **runner** | The machine-level daemon (`blizzard-runner`): the supervisor loop behind a local API, bound to one prepared workspace and registered with the hub; connects outbound-only. Its host is the "runner machine". |
 | **web app / board** | The hub's web front (`epic:board`): hub-served from the MVP — fleet observability, ready-queue prioritization, chunk grouping (D-048); PWA reach and the viewer/operator roles arrive remote (`milestone:centralized-hub`). |
-| **ask/answer** | The `blizzard ask` → park (`waiting_on_human`) → human answers → resume-with-answer protocol ([design/ask-answer.md](./design/ask-answer.md)). |
+| **ask/answer** | The `blizzard runner ask` → park (`waiting_on_human`) → human answers → resume-with-answer protocol ([design/ask-answer.md](./design/ask-answer.md)). |
 | **`waiting_on_human`** | A derived chunk condition — computed from an open ask or an unresolved gate decision (D-045), never stored (D-004): parked on a person, reap clock stopped. |
 | **planner** | The optional LLM PLAN phase that shapes tasks into execution units; gated by a deterministic validator. Parked pending the batching × workflow-graph open question. |
 | **conflict packing** | Putting predicted-conflicting tasks into one sequenced unit, converting lock contention into intra-agent ordering. |
-| **`blizzard selftest`** | A trivial task run through each harness before unattended periods, to catch adapter drift early. |
+| **`blizzard runner selftest`** | A trivial task run through each harness before unattended periods, to catch adapter drift early. |

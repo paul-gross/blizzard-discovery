@@ -63,7 +63,7 @@ The savings show up in ADVANCE, and so do the costs:
 - **Per-task verdicts are non-negotiable.** A batch reports `{12: done, 14: failed-tests, ...}`, one verdict per member task — never a single verdict for the whole unit.
 - **Wholesale unit failure explodes the batch.** If a unit fails as a whole, its members are requeued flagged `no-batch` and retried as **solos**. Batching is an optimization; the 1:1 mapping is the always-correct fallback.
 - **Tighter stall detection for batches.** A batch unit reports per-member progress in its heartbeat payload, so a batch that silently stalls on one member is caught faster than a solo would be.
-- **`blizzard ask` from a batch carries the member task id**, so a mid-batch question is routed to the right task.
+- **`blizzard runner ask` from a batch carries the member task id**, so a mid-batch question is routed to the right task.
 
 ## Rollout ladder
 

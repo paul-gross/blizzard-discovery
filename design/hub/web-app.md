@@ -21,7 +21,7 @@ Like every client, it is a **pure client of the hub's HTTP API + SSE** ([api.md]
 - **Prioritize.** Reorder the ready queue. With id-addressed ingestion (D-047) ordering is a hub-side property, and the web app is the surface where the operator sets it; the ordering mechanism itself (explicit rank, aging, starvation protection) is the queue-ordering [open question](../../decisions/open-questions.md).
 - **Group.** Merge unacquired chunks into one: the combined chunk carries the union of their PM pointers (D-047), and the merged-away chunks are discarded — they are ephemeral. Solo execution still holds: one environment, one agent per chunk; grouping widens what a single agent takes on, it never parallelizes a chunk. Manual grouping is not batching — the heuristic packer and LLM planner (`epic:batching`) stay parked.
 
-Gate decisions are resolvable from the board as well as the CLI, both from day one against the same hub route (D-052). Whether the MVP web app also answers *questions* — `blizzard answer` is the MVP acceptance path — or renders them read-only is part of the web-app-controls [open question](../../decisions/open-questions.md), as are the rank and group route shapes ([api.md](./api.md)).
+Gate decisions are resolvable from the board as well as the CLI, both from day one against the same hub route (D-052). Whether the MVP web app also answers *questions* — `blizzard hub answer` is the MVP acceptance path — or renders them read-only is part of the web-app-controls [open question](../../decisions/open-questions.md), as are the rank and group route shapes ([api.md](./api.md)).
 
 ## Remote slice (`milestone:centralized-hub`)
 

@@ -20,7 +20,7 @@ D-022/D-023 fixed the shape (hub authoritative for chunks, workflow state, artif
 
 ## Local ask/answer fast path
 
-How could a local developer quickly address ask/answer scenarios without having to go to the hub — is there a mechanism to explore here that would enable this? The protocol ([design/ask-answer.md](../design/ask-answer.md)) makes every question a hub row and every answer a hub write: even with a colocated hub (D-022) and the developer sitting at the runner machine, answering means CLI → hub → stream/poll → runner → resume. Candidate mechanisms: a runner-local answer verb that writes the answer as a runner-store fact and delivers immediately, syncing to the hub afterward; or `blizzard answer` short-circuiting delivery when the target session is on the same machine. The tension is authority — questions and answers are hub-owned facts (D-022/D-023) and the first-write-wins CAS lives at the hub, so any local path either forfeits that arbitration or needs a reconciliation story (what happens when a local answer and a remote board answer race?).
+How could a local developer quickly address ask/answer scenarios without having to go to the hub — is there a mechanism to explore here that would enable this? The protocol ([design/ask-answer.md](../design/ask-answer.md)) makes every question a hub row and every answer a hub write: even with a colocated hub (D-022) and the developer sitting at the runner machine, answering means CLI → hub → stream/poll → runner → resume. Candidate mechanisms: a runner-local answer verb that writes the answer as a runner-store fact and delivers immediately, syncing to the hub afterward; or `blizzard hub answer` short-circuiting delivery when the target session is on the same machine. The tension is authority — questions and answers are hub-owned facts (D-022/D-023) and the first-write-wins CAS lives at the hub, so any local path either forfeits that arbitration or needs a reconciliation story (what happens when a local answer and a remote board answer race?).
 
 ## Local vs hub pause reconciliation
 
@@ -40,7 +40,7 @@ The batching ladder (D-011) and the planner were designed against a flat queue; 
 
 ## PM ingestion surface (MVP-blocking)
 
-Decided (D-047): ingestion is explicit and id-addressed — a pointer per PM item, pass-through reads at the hub with hub-held per-vendor credentials, ephemeral chunks, and no MVP write-back. Unresolved: the intake surface itself (a `blizzard ingest` verb, the raw hub route, or both — and whether the MVP ships a canned agent-native ingest flow for the GitHub binding or only documents the pattern: an LLM with the PM system's own tooling supplies the specific ids); the pass-through read surface (route shape, and what beyond the body is exposed — comments, attachments, linked items); the pointer's exact scheme (interacts with the chunk-identity question above); per-vendor credential configuration (app registration, token storage at the hub); and discard mechanics (who may discard, and what happens to a discarded chunk's artifacts and history at the hub).
+Decided (D-047): ingestion is explicit and id-addressed — a pointer per PM item, pass-through reads at the hub with hub-held per-vendor credentials, ephemeral chunks, and no MVP write-back. Unresolved: the intake surface itself (a `blizzard hub ingest` verb, the raw hub route, or both — and whether the MVP ships a canned agent-native ingest flow for the GitHub binding or only documents the pattern: an LLM with the PM system's own tooling supplies the specific ids); the pass-through read surface (route shape, and what beyond the body is exposed — comments, attachments, linked items); the pointer's exact scheme (interacts with the chunk-identity question above); per-vendor credential configuration (app registration, token storage at the hub); and discard mechanics (who may discard, and what happens to a discarded chunk's artifacts and history at the hub).
 
 ## Queue ordering and prioritization
 
@@ -48,7 +48,7 @@ Priority must actually steer what the fleet pulls next (`persona:product-manager
 
 ## Web app controls and operator scope
 
-The MVP web app is authless and single-operator (D-018/D-048), with prioritize and group settled as its controls, and gate-decision resolution settled too (D-052: resolvable from the board and the CLI, one hub route) — still open there: whether it also answers *questions* (`blizzard answer` is the MVP acceptance path) or renders them read-only, and the rank/group route shapes ([design/hub/api.md](../design/hub/api.md)). The remote slice adds the viewer/operator role split — unresolved: exactly which controls the operator role gets — answering questions is settled (D-015), but pause/resume of runners, requeueing a chunk, killing a stuck worker, and editing graph YAML are all candidates — and how each maps onto durable hub state that runners pull; pause/resume already has its shape (the runner's `paused` flag, D-043), the rest remain unmapped.
+The MVP web app is authless and single-operator (D-018/D-048), with prioritize and group settled as its controls, and gate-decision resolution settled too (D-052: resolvable from the board and the CLI, one hub route) — still open there: whether it also answers *questions* (`blizzard hub answer` is the MVP acceptance path) or renders them read-only, and the rank/group route shapes ([design/hub/api.md](../design/hub/api.md)). The remote slice adds the viewer/operator role split — unresolved: exactly which controls the operator role gets — answering questions is settled (D-015), but pause/resume of runners, requeueing a chunk, killing a stuck worker, and editing graph YAML are all candidates — and how each maps onto durable hub state that runners pull; pause/resume already has its shape (the runner's `paused` flag, D-043), the rest remain unmapped.
 
 ## Cost controls
 
@@ -65,10 +65,6 @@ The hub never holds transcripts (D-012), so they live only on runner machines �
 ## Status-derivation event vocabulary (MVP-blocking)
 
 D-004 says status is derived, never stored, and the design's prose now speaks in recorded facts — but the fact vocabulary itself is not yet canonical. Needed: the full list of **facts/events** each derived status computes from (ask recorded → `waiting_on_human`; answer delivered → running again; escalation recorded → `needs-human`; delivery landed → done; …), which store owns each event (runner vs hub), and the derivation queries — so no implementer improvises a status column.
-
-## One binary or three
-
-D-020 named the three surfaces (`blizzard`, `blizzard-hub`, `blizzard-runner`) but not their packaging. Recommended shape, pending ratification: **one binary, three invocation personalities**, with the hyphenated daemon names as aliases/entry points (the git/busybox pattern) — the hub shares the facts schema and derivation queries with the runner store, so separate codebases would recreate the adapter-drift hazard internally, and one artifact deploys everywhere. Two constraints that hold regardless of packaging: the runner↔hub wire protocol needs a version field (cross-machine skew is inevitable), and the hook path (`blizzard heartbeat` on every tool call) must be milliseconds-cheap — which weighs on the implementation-language choice.
 
 ## Identity & permissioning spike (post-MVP)
 
