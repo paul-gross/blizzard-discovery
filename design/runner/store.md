@@ -1,6 +1,6 @@
 # The runner store
 
-The runner's embedded database: a sqlite (WAL) database **inside `blizzard-runner`**, which is its only reader and writer (D-023). It is an implementation detail of the runner, not a component anyone talks to — worker hooks and humans reach the runner's local API through the `blizzard` CLI (verb table in [contracts.md](./contracts.md)), and the daemon reaches the store in-process, so the schema stays private.
+The runner's embedded database: a sqlite (WAL) database **inside `blizzard-runner`**, which is its only reader and writer (D-023). It is an implementation detail of the runner, not a component anyone talks to — worker hooks and humans reach the runner's local API through the `blizzard` CLI (route table in [api.md](./api.md)), and the daemon reaches the store in-process, so the schema stays private.
 
 The store holds exactly the machine-local fast path in the [division of truth](../architecture.md#division-of-truth): leases, heartbeats, epochs, pids, and env bindings. Everything fleet-visible lives at the hub (D-022/D-024); lease facts are both — minted and leased here, reported to the hub as the fence's input (D-044).
 

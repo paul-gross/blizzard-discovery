@@ -10,5 +10,6 @@ Responsibilities, in one pass: acquire ready chunks from the hub (D-024 — neve
 | [loop.md](./loop.md) | The reconciliation loop — REAP / PULL / FILL / ADVANCE — crash recovery, idempotency, verdicts, operator controls. |
 | [environments.md](./environments.md) | The environment model: opaque env ids, the workspace-seam contract sketch, reset-on-acquire, environments riding the lease, the three capacities, worked winter and plain-git bindings. |
 | [contracts.md](./contracts.md) | Every API surface the runner speaks — local API, workspace provider, harness adapter, hub, operator — tracked as explicit contracts with maturity markers. |
+| [api.md](./api.md) | The local API's route table — the resource surface worker hooks and the CLI's local verbs speak, the CLI-verb mapping, wire conventions, and what is deliberately not a route. |
 
 Context above this component: [the architecture map](../architecture.md) for how the runner sits among the other pieces and the facts-only principle its store follows; [harness-adapters.md](../harness-adapters.md) for the adapter interface it drives.

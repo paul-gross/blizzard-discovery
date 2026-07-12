@@ -4,22 +4,9 @@ Every API surface the runner speaks, tracked explicitly so the element-to-elemen
 
 The runner is the hub of the wheel: it is the *only* component that talks to all of these. Workers talk only to the runner's local API (via hooks) and their code; the hub talks only to runners and clients.
 
-## 1. Runner local API — via the `blizzard` CLI · **draft**
+## 1. Runner local API — via the `blizzard` CLI · **draft** (routes in [api.md](./api.md))
 
-Transport: `blizzard <verb>` (D-020) as a pure client of the runner's local API (D-023) — the runner store's sqlite is embedded in the daemon, and the runner reaches it in-process, not through this contract. The verbs below are the API surface; which are hook/human-facing and which are runner-internal operations falls out of the facts-placement [open question](../../decisions/open-questions.md). All verbs are idempotent or CAS-atomic.
-
-| Operation | In | Out | Notes |
-|-----------|-----|-----|-------|
-| `blizzard lease` | runner id | chunk `{chunk_id, node, envs_wanted}` or nothing | Atomic CAS over the chunks acquired from the hub; epoch minted. One lease per node-step execution attempt (D-035). Runner-internal. |
-| `blizzard bind` | chunk id, env ids | ack | Records the chunk→env binding fact (D-021), same transaction discipline as lease. |
-| `blizzard heartbeat` | lease id | ack | Also invoked by worker hooks on every tool call. |
-| `blizzard release` | lease id, reason | ack | Normal completion, requeue, or escalation. |
-| `blizzard reap` | — | expired leases | Pid + process-start-time check; retry-or-escalate policy applied. |
-| `blizzard status` | filters | derived state (JSON) | A `SELECT`; never a stored status column (D-004). Machine-local view — fleet-wide status is a hub query. |
-| `blizzard ask` / `blizzard answer` | question / answer | ack | Ask-and-exit protocol (D-010, D-015); the runner forwards asks to the hub, where the question row lives. |
-| `blizzard selftest` | harness | pass/fail | Adapter-drift canary. |
-
-Open detail: exact verb set and flags (tracked in [open questions](../../decisions/open-questions.md)).
+Transport: `blizzard <verb>` (D-020) as a pure client of the runner's local API (D-023) — the runner store's sqlite is embedded in the daemon, and the runner reaches it in-process, not through this contract. The surface is resource-oriented with exactly two clients — worker hooks (heartbeats, asks) and the operator's local CLI verbs (status reads, declarative controls, selftests); the route table and CLI-verb mapping live in [api.md](./api.md). The earlier verb-table framing mixed in the loop's internal store writes (lease, bind, release, reap); those never cross the process boundary (D-023/D-049) and are not part of this contract. Open details: the wire transport (tracked in the runner↔hub protocol [open question](../../decisions/open-questions.md)) and exact CLI flags.
 
 ## 2. Runner ↔ Workspace provider · **draft** (shape in [environments.md](./environments.md))
 
@@ -56,9 +43,9 @@ All connections outbound from the runner (D-012); the hub is eventually-reachabl
 | event push | runner → hub | leases, routes ("chunk C, runner R, workspace W, env E" — D-021), verdicts, questions; batched, durable rows. |
 | answer / state pull | hub → runner (over the runner's outbound poll/SSE) | delivered answers, plus the runner's declarative operational state — `paused` now, routing knobs post-MVP (D-043). |
 
-## 6. Operator ↔ Runner · **open**
+## 6. Operator ↔ Runner · **draft** (local half shaped in [api.md](./api.md))
 
-Named capabilities (loop.md): pause (stop new leases, drain in-flight), start, and work selection — filter or pin what FILL may lease. Unshaped: whether these are `blizzard` verbs against the runner's local API, runner config reloads, or hub-relayed controls (all three may coexist; the local path must keep working while the hub is unreachable).
+Named capabilities (loop.md): pause (stop new leases, drain in-flight), start, and work selection — filter or pin what FILL may lease. The local path is declarative state on the runner singleton — `PATCH /runner {paused}`, mirroring the hub's `PATCH /runners/{id}` (D-043) so one control model serves both surfaces, and the local path keeps working while the hub is unreachable. Work-selection knobs take the same declarative shape post-MVP. Open: how the local flag and the hub registry flag compose into the effective state (the pause-reconciliation [open question](../../decisions/open-questions.md)).
 
 ## 7. Delivery · **open** — not a runner contract since D-030
 
