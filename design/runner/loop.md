@@ -48,7 +48,7 @@ The recorded binding is what makes recovery a no-op: acquisition is keyed by chu
 
 Judge finished workers and move their chunks through the graph (D-025/D-027).
 
-- A worker exiting is its **done declaration** (two-phase prompting, D-038) — *unless* an open **ask fact** was recorded for its lease during the session (`blizzard ask` hits the runner's local API before the worker exits — see [ask-answer.md](../ask-answer.md)), in which case the chunk parks as `waiting_on_human` instead. What exactly "declares done" is — and how a done-exit is told apart from a crash — is an [open question](../../decisions/open-questions.md).
+- A worker exiting is its **done declaration** (two-phase prompting, D-038) — *unless* an open **ask fact** was recorded for its lease during the session (`blizzard ask` hits the runner's local API before the worker exits — see [ask-answer.md](../ask-answer.md)), in which case the chunk parks as `waiting_on_human` instead. Exit *is* the done declaration (D-055): any verdict-less exit without an open ask receives the judgement resume, and the judgement reply — or its absence (D-009) — is what tells a done apart from a crash; a session that cannot answer its judgement fails, and the attempt counts against the node's retries.
 - Deliver the node's **judgement prompt** into the same session (the adapter's resume-with-message operation, D-038) to elicit the structured verdict — the engine-generated `<Choice>{name}</Choice>` selection over the node's choices (D-042) plus the assessment payload. Run the node's configured deterministic checks. Verdict + checks are the judgement (MVP form). Judgement prompt delivered, no parseable `<Choice>` back → failure (D-009).
 - Submit the node-step's completion to the hub as **one atomic write** (D-036): the transition — judgement plus the edge taken — together with its **artifacts**, branch/commit pointers (pushed to the forge first) and assets (D-026); the write carries the lease's epoch, and the hub rejects stale ones (D-007). Then:
   - **next runner node** → continue in place: same chunk, same environment, no re-queue — spawn (or resume) the next node's worker with its envelope, artifacts already at hand.
@@ -63,7 +63,7 @@ Progress detection requires **no cooperation from the agent**. The worker heartb
 
 A verdict is elicited, never volunteered (D-038/D-042): when the worker declares done, the runner resumes the session with the node's judgement prompt — the authored prose plus the engine-generated elicitation tail — and parses the reply's `<Choice>{name}</Choice>` against the node's choice set.
 
-A **missing or unparseable Choice is treated as failure** (D-009). The system fails safe: absence of a clear success signal is never read as success. The verdict is the agent-supplied half of the node judgement; the node's deterministic checks are the other half (D-025). How the assessment payload rides alongside the Choice — `.fleet/result.json`, harness-native structured output, or both — is the verdict-format [open question](../../decisions/open-questions.md).
+A **missing or unparseable Choice is treated as failure** (D-009). The system fails safe: absence of a clear success signal is never read as success. The verdict is the agent-supplied half of the node judgement; the node's deterministic checks are the other half (D-025). The assessment payload rides harness-native structured output (`--output-format json` / `--output-schema`), normalized by the adapter's `verdict()` — no file convention (D-056).
 
 ## Idempotency and recovery
 

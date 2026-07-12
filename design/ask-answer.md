@@ -29,7 +29,7 @@ Because `blizzard ask` hits the runner's local API *before* the worker exits, th
    cd <env> && claude -p --resume <sid> "Answer from <who>: <answer>. Continue."
    ```
 
-   The agent is **reconstituted around the answer**, not messaged mid-flight. The delivery is recorded as a fact — the chunk's derived status returns to running. (The adapter interface does not yet carry this automated resume-with-message operation — a known gap, tracked in [runner/contracts.md](./runner/contracts.md).)
+   The agent is **reconstituted around the answer**, not messaged mid-flight. The delivery is recorded as a fact — the chunk's derived status returns to running. (Delivery goes through the adapter's `resume` operation — D-050, [runner/contracts.md](./runner/contracts.md).)
 7. **Confirm.** The answering surface confirms "delivered, agent resumed," closing the trust loop for the human who answered.
 
 ## Why ask-and-exit, not blocking

@@ -22,10 +22,9 @@ Open details: capacity signaling (refuse-on-acquire vs queryable free-count), en
 | Operation | In | Out | Notes |
 |-----------|-----|-----|-------|
 | `spawn` | env ids, prompt, session id | pid | Pre-assigned session id; pid + process start time recorded as facts. |
+| `resume` | env id, session id, message | pid | Automated resume-with-message (D-050): the judgement prompt (D-038), answer delivery ([ask-answer.md](../ask-answer.md)), and the CI feedback loop all deliver through it (`claude -p --resume <sid> "…"`). |
 | `resume_cmd` | env id, session id | literal shell command | The *interactive* human-takeover command, for escalation records. |
-| `verdict` | worker output | structured result | The agent half of the node judgement (D-025); missing verdict = failure (D-009). |
-
-**Known gap:** the interface has no automated resume-with-message operation, though answer delivery ([ask-answer.md](../ask-answer.md)), the CI feedback loop, and the judgement prompt (D-038 — delivered into the session when the worker declares done) all need one (`claude -p --resume <sid> "…"`). With three consumers the gap is clearly required, not speculative. The per-harness comparison already carries the data (the "automated follow-up" row); the fourth function is to be added when the adapter contract is next revised.
+| `verdict` | worker output | structured result | The agent half of the node judgement (D-025); missing verdict = failure (D-009); assessment payload via harness-native structured output (D-056). |
 
 ## 4. Hub ↔ Work source (PM binding) · **open** — not a runner contract
 

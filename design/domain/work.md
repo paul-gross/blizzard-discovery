@@ -88,6 +88,6 @@ The fact that a chunk **did** move between graphs (D-033/D-034/D-037) — writte
 | `caused_by` | A `request_id`, or the pinned graph's `auto_migrate` policy (D-037/D-040). |
 | `from_graph_id` / `to_graph_id` | The graphs on either side; both immutable (D-033). |
 | `from_node_id` | The node (in `from_graph_id`) the chunk sat at when the migration applied. |
-| `to_node_id` | The node (in `to_graph_id`) the chunk re-pinned to, resolved by **name-match** against `from_node_id`'s name (D-034). The unmapped-node case (no matching name in `to_graph_id`) is an [open question](../../decisions/open-questions.md) — declarative node maps vs falling back to the original node. |
+| `to_node_id` | The node (in `to_graph_id`) the chunk re-pinned to, resolved by **name-match** against `from_node_id`'s name (D-034); when no name matches, the target graph's entry node (D-051). |
 | `epoch` (forced only) | The new fencing epoch minted by lease revocation — the existing epoch check (D-007) then rejects the abandoned in-flight work, which is redone under the new graph. |
 | `applied_at` | When it applied. |

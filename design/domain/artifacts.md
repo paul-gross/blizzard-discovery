@@ -48,7 +48,7 @@ There is no artifact-level epoch (D-036): the fence is checked once, on the tran
 
 **`produced_by`** carries the owning `chunk_id`, the exact **`node_id`** ([graph.md](./graph.md) — unique across all graphs, unlike the store key's `{node}` component, which is the node *name*), and the producing lease's `epoch`: one lease per node-step attempt (D-035), so the epoch disambiguates re-runs. The overlap with the store key cannot drift: artifact and KV entry land in the same atomic transition write (D-036).
 
-**`commit_hash`** pins the state that was actually verified: branches move, so the hash accompanies the branch name in every git-commit artifact. The hub stores the reference, never the code (D-012). A chunk touching five repos submits five git-commit artifacts.
+**`commit_hash`** pins the state that was actually verified: branches move, so the hash accompanies the branch name in every git-commit artifact. The hash is authoritative — the branch name serves only to detect commits ahead of it, and there is deliberately no fencing at the branch ref: a zombie clobbering a branch can lose work, never land wrong work (D-060). The hub stores the reference, never the code (D-012). A chunk touching five repos submits five git-commit artifacts.
 
 ### Storage model
 

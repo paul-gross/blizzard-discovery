@@ -14,6 +14,8 @@ The agreement between a runner and its workspace is keyed on one primitive: the 
 
 Everything above the seam is provider-agnostic: the runner records the chunk→env binding as a runner-store fact, spawns (or restarts) agents *against an env id*, and reports the route upward. An agent can always be re-associated to its environment by id — restart, resume, and takeover all address `(chunk, env id)`, never a path the runner computed itself.
 
+**The agent, not the runner, populates the environment (D-053).** The node envelope is pure-LLM: artifacts are presented in the prompt — pointer artifacts as their commit hash and feature branch name — and the agent sets up its own workspace from them. Agents manage environments, not the other way around. A provider *may* pre-materialize (check out branches, seed files) as a configurable property of this seam, but the engine never requires it.
+
 ## Two bindings, worked
 
 **Plain git (the simplest possible binding).** The runner acquires for chunk `x7`; the provider creates a worktree `feature-x7` and returns the id `feature-x7`. Freshly minted **is** clean — the mint is the reset. Capacity is effectively unbounded (disk); `release` deletes the worktree. Idempotency is free: `acquire(x7)` re-returns `feature-x7` if it exists.

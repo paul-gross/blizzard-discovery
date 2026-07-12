@@ -4,21 +4,21 @@ Blizzard is harness-agnostic. It drives Claude Code today and is designed to dri
 
 ## The adapter interface
 
-Three functions per harness:
+Four functions per harness:
 
 ```
-spawn(envs, prompt, session_id)  -> pid
-resume_cmd(env, session_id)      -> string
-verdict(output)                  -> result
+spawn(envs, prompt, session_id)     -> pid
+resume(env, session_id, message)    -> pid
+resume_cmd(env, session_id)         -> string
+verdict(output)                     -> result
 ```
 
 - `spawn` starts a headless worker against a pre-assigned session id, pointed at the chunk's environment ids (a chunk may hold several — D-021), and returns its pid.
+- `resume` delivers a message into an existing session headlessly and returns the new pid (D-050) — the operation behind the judgement prompt (D-038), answer delivery, and the CI feedback loop. Never run against a live process — always kill first.
 - `resume_cmd` returns the literal shell command a human runs to resume that session interactively.
-- `verdict` parses the **judgement-resume reply** (D-038) into a structured result — the `<Choice>{name}</Choice>` selection plus the assessment payload (D-042). Node prompting is two-phase: the worker's own exit carries no verdict; the runner resumes the session with the judgement prompt and this function parses what comes back.
+- `verdict` parses the **judgement-resume reply** (D-038) into a structured result — the `<Choice>{name}</Choice>` selection plus the assessment payload, carried as harness-native structured output (D-042/D-056). Node prompting is two-phase: the worker's own exit carries no verdict; the runner resumes the session with the judgement prompt and this function parses what comes back.
 
 Adapters must stay **dumb**. They translate; they do not decide. All arbitration lives in the deterministic core.
-
-**Known gap:** the interface has no automated resume-with-message operation, though the judgement prompt (D-038), answer delivery, and the CI feedback loop all need one — tracked in [runner/contracts.md](./runner/contracts.md).
 
 ## Per-harness comparison
 

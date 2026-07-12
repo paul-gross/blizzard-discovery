@@ -26,7 +26,7 @@ Two parts under one `graph_id`: the immutable **definition** (D-033 — every ed
 
 ## Node
 
-One station in one graph. A node belongs to exactly one immutable graph; same-named nodes in different graphs are **distinct nodes correlated only by name** — that name correlation is what deferred migration's matching keys on (D-034). Exact references (transitions, artifact provenance) carry `node_id`; cross-graph continuity (migration matching, the artifact store key) uses the name.
+One station in one graph. A node belongs to exactly one immutable graph; same-named nodes in different graphs are **distinct nodes correlated only by name** — that name correlation is what deferred migration's matching keys on (D-034); a migration whose destination name has no match in the target graph lands the chunk at the target's entry node (D-051). Exact references (transitions, artifact provenance) carry `node_id`; cross-graph continuity (migration matching, the artifact store key) uses the name.
 
 | Property | Notes |
 |----------|-------|
@@ -39,6 +39,7 @@ One station in one graph. A node belongs to exactly one immutable graph; same-na
 | judgement | How the exit judgement is rendered — see Judgement spec. |
 | retries | Max attempts plus the exhaustion target (escalation) — the escape hatch out of any cycle. |
 | produces | Artifact names the node is expected to submit (D-026/D-036). |
+| session | Fresh or resumed agent session for this node's steps — defaults to resume (D-054); review-style nodes opt into cold eyes. |
 
 ## Edge
 
