@@ -13,7 +13,7 @@ resume_cmd(env, session_id)         -> string
 verdict(output)                     -> result
 ```
 
-- `spawn` starts a headless worker against a pre-assigned session id, pointed at the chunk's environment ids (a chunk may hold several — D-021), and returns its pid.
+- `spawn` starts a headless worker against a pre-assigned session id, pointed at the chunk's environment ids and their provider-returned workdirs (a chunk may hold several — D-021/D-062), and returns its pid. The prompt it delivers is the hub's node envelope plus the runner's machine-local preamble — the held env ids with their workdirs (D-063); `BLIZZARD_ENV_IDS` rides the spawn environment alongside the identity variables.
 - `resume` delivers a message into an existing session headlessly and returns the new pid (D-050) — the operation behind the judgement prompt (D-038), answer delivery, and the CI feedback loop. Never run against a live process — always kill first.
 - `resume_cmd` returns the literal shell command a human runs to resume that session interactively.
 - `verdict` parses the **judgement-resume reply** (D-038) into a structured result — the `<Choice>{name}</Choice>` selection plus the assessment payload, carried as coding-harness-native structured output (D-042/D-056). Node prompting is two-phase: the worker's own exit carries no verdict; the runner resumes the session with the judgement prompt and this function parses what comes back.

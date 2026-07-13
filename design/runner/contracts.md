@@ -8,20 +8,22 @@ The runner is the hub of the wheel: it is the *only* component that talks to all
 
 Transport: `blizzard <verb>` (D-020) as a pure client of the runner's local API (D-023) — the runner store's sqlite is embedded in the daemon, and the runner reaches it in-process, not through this contract. The surface is resource-oriented with exactly two clients — worker hooks (heartbeats, asks) and the operator's local CLI verbs (status reads, declarative controls, selftests); the route table lives in [api.md](./api.md), the CLI verb surface in [cli.md](../cli.md). The earlier verb-table framing mixed in the loop's internal store writes (lease, bind, release, reap); those never cross the process boundary (D-023/D-049) and are not part of this contract. Open details: the wire transport (tracked in the runner↔hub protocol [open question](../../decisions/open-questions.md)) and exact CLI flags.
 
-## 2. Runner ↔ Workspace provider · **draft** (shape in [environments.md](./environments.md))
+## 2. Runner ↔ Workspace provider · **settled shape (D-062/D-064)** (detail in [environments.md](./environments.md))
 
 | Operation | In | Out | Notes |
 |-----------|-----|-----|-------|
-| `acquire` | chunk id, count | env ids, or refusal | Idempotent per chunk id; every returned environment is **clean by contract** (D-021). All-or-nothing at the runner: on partial satisfaction, release and skip the chunk this tick. |
+| `acquire` | chunk id, count, held env ids | `(env id, workdir)` pairs, or refusal | Provider is **allocation-stateless** (D-062): pool is its static config, it picks from pool minus the passed held set; every returned environment is **clean by contract** (D-021); the workdir may not exist yet under a lazy binding (the agent materializes it, D-053/D-063). Idempotent re-acquire is answered from the runner's own binding facts — the provider sees only genuinely-new allocations. All-or-nothing at the runner: on partial satisfaction, release and skip the chunk this tick. |
 | `release` | env id | ack | No-op if unknown/already released. Cleaning happens on next acquire, not here. |
 
-Open details: capacity signaling (refuse-on-acquire vs queryable free-count), env affinity hints, grow-on-demand.
+Packaging (D-064): a capability slot — reference bindings (plain git, winter) compiled into the `blizzard` binary, BYO providers as invoked executables behind a versioned exec protocol (argv verbs, JSON out).
+
+Open details: capacity signaling (queryable pool size), env affinity hints, grow-on-demand, the exec wire schema.
 
 ## 3. Runner ↔ Harness adapter · **draft** (interface in [harness-adapters.md](../harness-adapters.md))
 
 | Operation | In | Out | Notes |
 |-----------|-----|-----|-------|
-| `spawn` | env ids, prompt, session id | pid | Pre-assigned session id; pid + process start time recorded as facts. |
+| `spawn` | env ids + workdirs, prompt, session id | pid | Pre-assigned session id; pid + process start time recorded as facts. The prompt is the hub's node envelope plus the runner's machine-local preamble — held env ids and workdirs (D-063); `BLIZZARD_ENV_IDS` joins the injected identity variables. |
 | `resume` | env id, session id, message | pid | Automated resume-with-message (D-050): the judgement prompt (D-038), answer delivery ([ask-answer.md](../ask-answer.md)), and the CI feedback loop all deliver through it (`claude -p --resume <sid> "…"`). |
 | `resume_cmd` | env id, session id | literal shell command | The *interactive* human-takeover command, for escalation records. |
 | `verdict` | worker output | structured result | The agent half of the node judgement (D-025); missing verdict = failure (D-009); assessment payload via harness-native structured output (D-056). |

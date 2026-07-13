@@ -38,11 +38,11 @@ Keep the fleet busy.
 - Compute open agent slots: `slots = MAX_AGENTS − running`.
 - For each open slot:
   1. Atomically lease the next acquired chunk in the runner store.
-  2. Acquire the chunk's environment(s) from the workspace provider — opaque env ids, clean by contract (D-021) — and record the chunk→env binding as a runner-store fact. If the provider cannot satisfy the chunk's environment count, release the lease and skip it this tick.
-  3. Spawn a headless worker with a **pre-assigned session id**, pointed at the chunk's env ids and primed with the node envelope.
+  2. Acquire the chunk's environment(s) from the workspace provider — opaque env ids with their workdirs, clean by contract (D-021), the currently-held set passed in (D-062) — and record the chunk→env binding as a runner-store fact. If the provider cannot satisfy the chunk's environment count, release the lease and skip it this tick.
+  3. Spawn a headless worker with a **pre-assigned session id**, pointed at the chunk's env ids and primed with the node envelope plus the runner's machine-local preamble — the held env ids and their workdirs (D-063).
   4. Record the worker's pid + process start time.
 
-The recorded binding is what makes recovery a no-op: acquisition is keyed by chunk id and idempotent on the provider side, and re-running FILL for a chunk that already has a binding reads it back instead of re-acquiring, so nothing is duplicated (D-021 supersedes the earlier deterministic-env-name scheme).
+The recorded binding is what makes recovery a no-op: re-running FILL for a chunk that already has a binding reads it back from the runner's own facts instead of re-acquiring — the provider, which keeps no allocation state (D-062), is never even called. Nothing is duplicated (D-021 supersedes the earlier deterministic-env-name scheme), and a crash between the provider's clean and the binding write is absorbed by reset-on-acquire.
 
 ### ADVANCE
 

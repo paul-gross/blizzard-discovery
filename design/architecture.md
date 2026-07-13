@@ -32,7 +32,7 @@ Deep dive: [runner/](./runner/index.md).
 
 ### workers
 
-Run as child processes of the runner, working in the chunk's leased environments on one node-step at a time, primed with the node envelope. Talk to the runner's local API via the CLI (from hooks), and to the code itself. Deep dive: [harness-adapters.md](./harness-adapters.md).
+Run as child processes of the runner, working in the chunk's leased environments on one node-step at a time, primed with the node envelope plus the runner's machine-local preamble — the held env ids and their workdirs (D-063). Talk to the runner's local API via the CLI (from hooks), and to the code itself. Deep dive: [harness-adapters.md](./harness-adapters.md).
 
 ### `blizzard-cli`
 
@@ -44,7 +44,7 @@ Runs as short-lived invocations of the one `blizzard` binary (D-061). A pure cli
 
 ### workspace provider
 
-Allocates clean environments by opaque environment id: a plain binding mints `feature-{work-tag}` worktrees, the winter binding hands out its existing envs (alpha, beta, …). Runs as an invoked binary, one binding per runner (D-019). Talks to the filesystem / git. Deep dive: [runner/environments.md](./runner/environments.md).
+Allocates clean environments by opaque environment id, each returned with its working directory: a plain binding mints `feature-{work-tag}` worktrees, the winter binding hands out its existing envs (alpha, beta, …). A capability slot (D-064): the reference bindings compile into the `blizzard` binary, a BYO provider is an invoked executable behind a versioned exec protocol — one binding per runner (D-019). Allocation-stateless: holds are runner-store facts, passed into `acquire` (D-062). Talks to the filesystem / git. Deep dive: [runner/environments.md](./runner/environments.md).
 
 ### web app / chat bot
 
@@ -123,7 +123,7 @@ The diagrams encode rules that hold everywhere:
 - **All work flows through the hub (D-024).** The PM binding feeds the hub; runners acquire chunks from the hub and never speak to the PM system. The only external system a runner touches directly is git remotes — branch-artifact pushes; delivery itself (merging, or opening the PR) executes at the hub through the forge (D-030).
 - **Work moves on a graph (D-025/D-027).** The hub owns the workflow definitions and the transition record; the runner holding a chunk advances it through consecutive nodes without re-queuing, and every judgement and transition lands at the hub.
 - **The runner store and the hub are different stores, and both exist from the MVP (D-022).** See the [division of truth](#division-of-truth) below. Wire-level protocol details are an [open question](../decisions/open-questions.md).
-- **Environments are opaque ids.** The runner asks the workspace provider to acquire; it gets back an id (`feature-x7`, `alpha`, …), records the chunk→env binding as a fact in its store, and reports the route (chunk → runner → workspace → env) to the hub. An acquired environment is clean by contract (D-021).
+- **Environments are opaque ids.** The runner asks the workspace provider to acquire, passing the held set (the provider keeps no allocation state — D-062); it gets back an id and a working directory (`feature-x7`, `alpha`, …), records the chunk→env binding as a fact in its store, and reports the route (chunk → runner → workspace → env) to the hub. An acquired environment is clean by contract (D-021).
 - **Workers never talk to the hub.** Only the runner does, outbound-only. A worker's world is its environment, its hooks, and the CLI.
 - **Humans plug in at three places:** the hub (`blizzard hub status` / `blizzard hub answer`, and the web app's observability and queue shaping — D-048; in the MVP, answering a question means going to the hub), session takeover (`blizzard runner takeover`, or the pasted resume command), and — from `milestone:centralized-hub` — the remote clients: the board's PWA reach and the chat bot.
 - **Every external system sits behind a seam** (D-016): the work source (at the hub, D-024), the workspace provider, the harness, delivery (the deliver node's binding), and the human channel are all interfaces with the reference stack (GitHub, winter, Claude Code) as first bindings.
