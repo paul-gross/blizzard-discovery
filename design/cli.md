@@ -27,7 +27,7 @@ Every verb is namespaced by the system it targets (D-061): `blizzard runner <cmd
 | `blizzard hub status` | human | `GET /chunks` + `GET /questions` + `GET /runners` | The fleet view: every chunk, open question, and registered runner — what the board renders, in the terminal. |
 | `blizzard hub answer <question-id> "<answer>"` | human | `POST /questions/{id}/answer` | First-write-wins CAS at the hub; the loser is told who already answered ([ask-answer.md](./ask-answer.md)). |
 | `blizzard hub decisions` / `blizzard hub decide <decision-id> <choice>` | human | `GET` open decisions / `POST /decisions/{id}/resolution` | The CLI half of gate surfacing (D-052) — same hub route as the board's buttons; resolution is first-write-wins like an answer (D-045). |
-| `blizzard hub ingest …` | human | `POST /chunks` | Whether a verb fronts the route at all is part of the PM-ingestion [open question](../decisions/open-questions.md). |
+| `blizzard hub ingest …` | human | `POST /chunks` | Ingest PM items by pointer — `{provider, url}` per item (D-074/D-075); specific ids always, batch fine. |
 
 ## `blizzard runner takeover`
 

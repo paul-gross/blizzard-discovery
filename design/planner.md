@@ -1,6 +1,6 @@
 # The LLM planner (work-shaping)
 
-> **Status: parked.** This document predates the workflow engine (D-025) and still speaks in execution units against a flat queue. Batching's interplay with the graph — whether a batch is one chunk with many PM references, how per-member verdicts work at a node exit — is an [open question](../decisions/open-questions.md); the design below is the input to that reconciliation, not current truth. When it is reconciled, it lands as `design/batching.md` (matching `epic:batching`).
+> **Status: parked.** This document predates the workflow engine (D-025) and still speaks in "execution units" against a flat queue — a term now retired: a batch is one **chunk** carrying many PM pointers (D-076), and this document will be rewritten in chunk terms when batching lands. Batching's remaining interplay with the graph — per-member verdicts at a node exit, the per-member heartbeat payload — is an [open question](../decisions/open-questions.md); the design below is the input to that reconciliation, not current truth. When it is reconciled, it lands as `design/batching.md` (matching `epic:batching`).
 
 An LLM can shape raw open tasks into a smart batch plan — bundling related work, sequencing conflicts, and choosing models and harnesses. This is feasible and valuable, but it must be quarantined: it is a **separate PLAN phase between PULL and FILL**, and it is **never inside the supervisor's control logic**. The supervisor stays deterministic; the planner is an advisory LLM whose output is validated to death before it is trusted.
 

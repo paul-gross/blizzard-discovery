@@ -17,4 +17,4 @@ The store holds the top two tiers of the [division of truth](../architecture.md#
 
 ## What stays open
 
-The wire protocol that feeds this store is settled — store-and-forward from each runner, idempotent by per-runner monotonic seq against a high-water mark held here (D-069). The artifact storage details, chunk identity, and prioritization/ordering of the ready queue are tracked in [open questions](../../decisions/open-questions.md). The fact vocabulary the store records and the status derivations over it are canonical in [events.md](../domain/events.md) (D-067).
+The wire protocol that feeds this store is settled — store-and-forward from each runner, idempotent by per-runner monotonic seq against a high-water mark held here (D-069). The artifact storage details and prioritization/ordering of the ready queue are tracked in [open questions](../../decisions/open-questions.md). The fact vocabulary the store records and the status derivations over it are canonical in [events.md](../domain/events.md) (D-067).
