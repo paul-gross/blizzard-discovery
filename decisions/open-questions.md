@@ -58,10 +58,6 @@ Workers run unattended and their output merges to main in the baseline — what 
 
 The hub never holds transcripts (D-012), so they live only on runner machines — but `persona:harness-engineer`'s incident reconstruction needs them: the fact record explains the lifecycle, the transcript explains the reasoning. Unresolved: retention window and rotation on the runner, the access path during forensics (a `blizzard` verb? raw files?), and whether a transcript *pointer* (machine + session id) should be a hub-side fact so the board can link to it.
 
-## Status-derivation event vocabulary (MVP-blocking)
-
-D-004 says status is derived, never stored, and the design's prose now speaks in recorded facts — but the fact vocabulary itself is not yet canonical. Needed: the full list of **facts/events** each derived status computes from (ask recorded → `waiting_on_human`; answer delivered → running again; escalation recorded → `needs-human`; delivery landed → done; …), which store owns each event (runner vs hub), and the derivation queries — so no implementer improvises a status column.
-
 ## Identity & permissioning spike (post-MVP)
 
 Decided (D-018): the first hub ships authless behind Tailscale, and auth is configurable because the hub may run locally or in the cloud. The spike itself is the open work: identity provider choice (Google OAuth2 or similar), how identities map onto the viewer/operator roles, per-user permissions, and the configuration shape that lets a local hub run with no auth while a cloud hub requires it.

@@ -4,15 +4,17 @@ The work lifecycle: the chunk at the center, its derived statuses, the transitio
 
 ## Status enum
 
-The working set of derived chunk statuses. Per D-004 none of these is ever a stored column — each is the result of a query over the facts named beside it. This is the vocabulary the corpus uses so far; the canonical fact/event list each derivation computes from is an [open question](../../decisions/open-questions.md).
+The derived chunk statuses (D-067). Per D-004 none of these is ever a stored column — each is the result of a query over recorded facts. The canonical fact vocabulary and the derivation queries, including their precedence order, live in [events.md](./events.md); this table is the summary.
 
 | Status | Derived from |
 |--------|--------------|
 | `ready` | Ingested by id into a chunk (D-024/D-047), no route recorded yet — sitting in the hub's ready queue. |
-| `running` | A route exists (D-021) and the newest lifecycle fact is neither an open ask, an escalation, nor a landed delivery. |
-| `waiting_on_human` | An open ask — a question row with no answer row ([ask-answer.md](../ask-answer.md)) — or an open decision — a gate's decision row no transition references (D-045) — is recorded against the chunk; the reap clock is stopped. Answer delivery or decision resolution flips it back to `running`. |
-| `needs_human` | An escalation fact is recorded — retries exhausted or a worker died without a verdict past the retry cap (D-009); a human takeover is required. |
-| `done` | The deliver node landed the chunk's git-commit artifacts through the merge queue (D-030). |
+| `running` | A route exists (D-021) and no higher-precedence fact matches. |
+| `delivering` | The newest accepted transition entered a hub node (D-030) — queued, merging, or awaiting an external merge (D-065); the runner holds environments throughout (D-066). |
+| `waiting_on_human` | An open ask — a question row with no answer row ([ask-answer.md](../ask-answer.md)) — or an open decision — a gate's decision row no transition references (D-045); the reap clock is stopped. The answer row or the resolution flips it back. |
+| `needs_human` | An open escalation — retries exhausted or a worker died without a verdict past the retry cap (D-009) — with no later lease fact: requeue or takeover closes it by supersession, never a resolution fact (D-067). |
+| `stopped` | An operator stop fact (D-067) — terminal abandonment at any point after acquisition, artifacts and history retained. |
+| `done` | The deliver node landed the chunk's git-commit artifacts through the merge queue (D-030), or its PR reached a terminal state externally (D-065). |
 
 ## Chunk
 

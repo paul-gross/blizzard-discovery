@@ -14,4 +14,4 @@ The ask/answer rendezvous rows, born at the hub — the protocol itself is [ask-
 | answer: `answered_by` | Who answered — first-write-wins CAS means exactly one answer row ever exists; losers are told who won. |
 | answer: `answer` | The chosen option or free text, carried into the resume prompt ("Answer from \<who\>: \<answer\>. Continue."). |
 | answer: `answered_at` | When the winning write landed. |
-| delivery | The resume-with-answer is recorded as its own fact — it flips the chunk's derived status back to running. |
+| delivery | The resume-with-answer is recorded as its own fact (`answer.delivered`, [events.md](./events.md)) — it restarts the reap clock; the answer row itself is what flips the derived status back to running. |

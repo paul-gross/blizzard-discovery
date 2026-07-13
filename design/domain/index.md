@@ -14,3 +14,4 @@ Like the API surface, this model is **draft**: the models and their relationship
 | [artifacts.md](./artifacts.md) | Artifact · Merge queue entry | …you need chunk outputs — the `git_commit`/`asset` data format — and how they land through the merge queue. |
 | [questions.md](./questions.md) | Question · Answer | …you need the ask/answer rendezvous rows behind [the protocol](../ask-answer.md). |
 | [fleet.md](./fleet.md) | Runner · Route · Event | …you need the fleet registry (including the runner's `paused` state), chunk locators, or the event stream. |
+| [events.md](./events.md) | Fact vocabulary · Status derivation queries | …you need the canonical fact/event list (D-067), which store owns each fact, or the exact query and precedence behind any derived status. |

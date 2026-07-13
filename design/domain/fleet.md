@@ -33,4 +33,4 @@ A runner's connection is outbound-only (D-012), and `workspace_id` names which p
 
 ## Event
 
-What the SSE stream carries and the batched push ingests — `question.answered` is the one named so far; the canonical fact/event vocabulary that statuses derive from is an [open question](../../decisions/open-questions.md).
+What the SSE stream carries and the batched push ingests. Fact names double as event names — the canonical vocabulary is [events.md](./events.md) (D-067); `question.answered` is one of them.

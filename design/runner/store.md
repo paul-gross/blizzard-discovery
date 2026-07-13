@@ -37,7 +37,7 @@ Per the fleet-wide [facts-only principle](../architecture.md#store-facts-derive-
 - escalations — recorded before the resume command is printed, so no supervisor races the human
 - the outbound buffer — facts awaiting flush to an unreachable hub (transitions, questions, events)
 
-A chunk's *status* — running, stalled, waiting-on-human, done, failed — is never a stored column; it is derived by query. This is what makes the runner's crash recovery correct rather than aspirational (see [loop.md](./loop.md)).
+A chunk's *status* — running, stalled, waiting-on-human, done ([domain/events.md](../domain/events.md) is the canonical vocabulary, D-067) — is never a stored column; it is derived by query. This is what makes the runner's crash recovery correct rather than aspirational (see [loop.md](./loop.md)).
 
 ## Epochs (fencing tokens)
 
