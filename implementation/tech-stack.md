@@ -1,23 +1,23 @@
 # Tech stack
 
-Settled (D-094 through D-097, D-101, D-102) — this file owns the full treatment behind those [decision log](../decisions/log.md) entries.
+Settled (D-094 through D-097, D-101, D-102) — see the [decision log](../decisions/log.md).
+The backend library picks (D-094), the frontend framework and library choices (D-096/D-097), and the hosting topology are owned here; the enforceable **toolchain** (D-101), **logging** (D-102), and **portable-SQL** (D-095) rules have graduated to **blizzard-harness** at `blizzard-harness:/standards/index.md`.
 
 ## Backend
 
 - **Language: Python** — for the hub, the runner, and the CLI (D-094).
 - **Libraries:** FastAPI (HTTP APIs + SSE), SQLAlchemy (persistence), click (CLI), uv (packaging/venv) — and, as further needs arise, the libraries already standard across winter-cli and the other winter projects rather than new picks (D-094).
-- **SQL is configurable on both daemons** (D-095). The hub store and the runner store each run on **sqlite or postgres**, selected by configuration — neither daemon may depend on backend-specific behavior. sqlite is the fast local default and what tests run against ([testing.md](./testing.md)); postgres support is held by staying inside SQLAlchemy's portable surface, not by a duplicated test matrix.
+- **SQL is configurable on both daemons** (D-095): the hub and runner stores each run on **sqlite or postgres**, selected by configuration, with sqlite the fast local default. The enforceable portable-SQL rule (stay inside SQLAlchemy's portable surface, no second test matrix) is owned by `blizzard-harness:/standards/persistence.md` (`bzh:sql-portable`).
 
 ## Quality toolchain (D-101)
 
-- **Python:** ruff (lint + format) and pyright.
-- **TypeScript/Angular:** eslint. **No prettier** — formatting concerns that matter are eslint rules; a second formatter is a second opinion.
-- Enforced by the CI gates in [build.md](./build.md) from the first commit.
+> **Graduated** to **blizzard-harness**.
+The Python (uv, ruff, pyright) and TypeScript/Angular (eslint, **no prettier**, vitest) toolchains and the commands a change must pass are owned by `blizzard-harness:/standards/python.md` (`bzh:python-toolchain`) and `blizzard-harness:/standards/frontend.md` (`bzh:frontend-toolchain`), enforced by the CI gates in [build.md](./build.md) from the first commit.
 
 ## Logging (D-102)
 
-**structlog**, with output selected by configuration: **JSON renderer** when agents, services, or CI consume the logs; a **human console renderer** (colored key-value) for interactive runs — default chosen by TTY detection, overridable by config/env.
-One logging call-site convention regardless of renderer; log-level conventions follow the winter standards the harness carries over.
+> **Graduated** to **blizzard-harness**.
+The **structlog** call-site convention, the configuration-selected JSON/console renderers (default by TTY detection), and the carried-over log-level conventions are owned by `blizzard-harness:/standards/logging.md` (`bzh:structlog-logging`).
 
 ## Frontend
 
