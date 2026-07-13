@@ -1,6 +1,6 @@
 # Workflow graph models
 
-The definition chunks travel — the engine itself is [workflow-engine.md](../workflow-engine.md). Part of the [domain model](./index.md). Graphs are hub-owned (D-025); the YAML authoring shape is sketched in [sample-graph.yaml](../hub/sample-graph.yaml), and its schema remains an [open question](../../decisions/open-questions.md).
+The definition chunks travel — the engine itself is [workflow-engine.md](../workflow-engine.md). Part of the [domain model](./index.md). Graphs are hub-owned (D-025); the YAML authoring schema is canonical in [graph-schema.md](../hub/graph-schema.md) (D-071), with [sample-graph.yaml](../hub/sample-graph.yaml) as a conforming example.
 
 There is **no graph family** (D-040): graphs are standalone immutable entities, and any graph may migrate to any graph so long as the node mapping gets the chunks over. What looks like "versions of a workflow" is emergent — a chain of `migration_target` pointers between graphs that happen to share a name.
 

@@ -41,7 +41,7 @@ All connections outbound from the runner (D-012); the hub is eventually-reachabl
 | register | runner → hub | runner id + workspace id; makes the runner visible on the board. |
 | liveness heartbeat | runner → hub | `POST /runners/{id}/heartbeats` (D-070) — refreshes `last_seen_at`; the board's online/offline derives from it. |
 | acquire chunks | runner → hub | ready chunks with their **node envelopes** (prompt, node config, relevant artifacts) — the PULL step (D-024). |
-| transition record | runner → hub | judgement + node transition + the step's artifacts, one atomic write (D-027, D-036): git-commit artifacts pushed to the forge first (D-026); idempotent via its flush seq (D-069); carries the lease's epoch — the hub rejects stale ones (D-007/D-030). |
+| transition record | runner → hub | the node-step's completion — judgement choice + check results + the step's artifacts, one atomic write (D-027, D-036): git-commit artifacts pushed to the forge first (D-026); idempotent via its flush seq (D-069); carries the lease's epoch — the hub rejects stale ones (D-007/D-030). The apply-response returns the next node envelope, applying any pending migration atomically (D-072) — the advancement checkpoint. |
 | event push | runner → hub | leases, routes ("chunk C, runner R, workspace W, env E" — D-021), verdicts, questions; batched from the outbound buffer in FIFO order (D-044/D-069). |
 | answer / state pull | hub → runner (over the runner's outbound poll/SSE) | delivered answers, plus the runner's declarative operational state — `paused` now, routing knobs post-MVP (D-043). |
 

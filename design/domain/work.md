@@ -75,7 +75,7 @@ The **intent** to move a chunk between graphs (D-037) — never the record of it
 | `request_id` | What the eventual migration record's `caused_by` points back at. |
 | `chunk_id` | The chunk to re-pin. |
 | `to_graph_id` | The target graph. |
-| mode | `deferred` or `forced` (D-034). Deferred: apply at the chunk's next transition. Forced: apply immediately — the hotfix path. |
+| mode | `deferred` or `forced` (D-034). Deferred: applied by the hub at the chunk's next transition ingestion, atomically with the transition (D-072); the runner discovers the swap in the apply-response's envelope. Forced: apply immediately — the hotfix path. |
 | `requested_at` / `triggered_by` | When and by whom. |
 
 Standing intent is **not** a request: "always drift onward" lives on each graph as its `auto_migrate` policy plus `migration_target` pointer ([graph.md](./graph.md), D-040), and a chunk's pending auto-migration is derived — its pinned graph has `auto_migrate: deferred` and an **enabled** (D-039) `migration_target`. No per-chunk rows are fanned out when a new graph is published. A parked chunk never transitions, so it never auto-migrates until resumed — "next convenient time" by construction.
