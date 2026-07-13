@@ -29,4 +29,4 @@ What going remote adds — reach, never architecture: phone-friendly PWA packagi
 
 ## Shape
 
-Server-rendered pages plus SSE for live updates — deliberately boring; the PWA shell arrives with the remote slice. Implementation details (framework, how the hub serves it) are unshaped, deliberately, during discovery.
+A client-rendered SPA plus SSE for live updates — deliberately boring; the PWA shell arrives with the remote slice. The framework and serving model are settled (D-096: Angular CSR served by the daemon itself) and owned by [implementation/tech-stack.md](../../implementation/tech-stack.md).

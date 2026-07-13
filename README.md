@@ -18,11 +18,11 @@ Everything here is a proposal. Settled choices live in the [decision log](./deci
 
 ## Reading order
 
-For a cold, front-to-back read: **product** (mission → personas → mvp → vision → roadmap; epics and the story map are reference) → **design** (architecture → workflow-engine → concurrency-model → runner → harness-adapters → hub → cli → ask-answer → planner) → **research** → **decisions**. The [glossary](./glossary.md) is a companion throughout.
+For a cold, front-to-back read: **product** (mission → personas → mvp → vision → roadmap; epics and the story map are reference) → **design** (architecture → workflow-engine → concurrency-model → runner → harness-adapters → hub → cli → ask-answer → planner) → **research** → **decisions** → **implementation**. The [glossary](./glossary.md) is a companion throughout.
 
 ## The corpus
 
-The four layers have different lifecycles: product documents should barely change once settled, design documents churn throughout discovery, research is a point-in-time record, and decisions only grow.
+The five layers have different lifecycles: product documents should barely change once settled, design documents churn throughout discovery, research is a point-in-time record, decisions only grow, and implementation documents churn until the build starts and then seed the build ecosystem's own harness.
 
 ### `product/` — what and why
 
@@ -64,6 +64,12 @@ The four layers have different lifecycles: product documents should barely chang
 |----------|-----------------|
 | [decisions/log.md](./decisions/log.md) | The settled decisions, each with its rationale — considered-and-rejected made distinguishable from never-considered. |
 | [decisions/open-questions.md](./decisions/open-questions.md) | The open questions still to be resolved; each resolution graduates into the log. |
+
+### `implementation/` — how it gets built
+
+| Document | What it answers |
+|----------|-----------------|
+| [implementation/index.md](./implementation/index.md) | The implementation plan hub: the development ecosystem (workspace, repos, harness), architecture rules, test and mock strategy, and tech stack. |
 
 ## Guiding philosophy
 

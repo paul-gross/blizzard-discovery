@@ -19,6 +19,8 @@ Every verb is namespaced by the system it targets (D-061): `blizzard runner <cmd
 | `blizzard runner takeover <chunk-id>` | human | `POST /chunks/{id}/takeovers`, then exec | Below. |
 | `blizzard runner requeue <chunk-id>` | human | `POST /chunks/{id}/requeues` | The takeover hand-back: appends the fact that clears `needs-human`, making the chunk leasable at its current node next FILL; `409` while the takeover session's process is still alive. |
 | `blizzard runner selftest <coding-harness>` | human | `POST /selftests` | Adapter-drift canary before any unattended period ([harness-adapters.md](./harness-adapters.md)). |
+| `blizzard runner init <dir>` | operator | — store, offline | Creates the runner's runtime environment idempotently — config scaffold, data directory, store created and migrated to head (D-099, [implementation/build.md](../implementation/build.md)). |
+| `blizzard runner migrate [--down <rev>]` | operator | — store, offline | Applies pending store migrations (or reverses to `<rev>`); the daemon refuses to start on a schema-revision mismatch and names this command (D-099). |
 
 ## `blizzard hub <cmd>` — the fleet surface
 
@@ -30,6 +32,8 @@ Every verb is namespaced by the system it targets (D-061): `blizzard runner <cmd
 | `blizzard hub decisions` / `blizzard hub decide <decision-id> <choice>` | human | `GET` open decisions / `POST /decisions/{id}/resolution` | The CLI half of gate surfacing (D-052) — same hub route as the board's buttons; resolution is first-write-wins like an answer (D-045). |
 | `blizzard hub ingest …` | human | `POST /chunks` | Ingest PM items by pointer — `{provider, url}` per item (D-074/D-075); specific ids always, batch fine; a pointer with a live chunk is rejected (D-093). |
 | `blizzard hub detach <chunk-id>` | human | `POST /chunks/{id}/detach` | Forcibly release a chunk from its runner (D-088): the chunk re-derives ready, the old runner is fenced by the next claim's epoch floor — the superadmin's "this runner is gone." |
+| `blizzard hub init <dir>` | operator | — store, offline | Creates the hub's runtime environment idempotently — config scaffold, data directory, store created and migrated to head (D-099, [implementation/build.md](../implementation/build.md)). |
+| `blizzard hub migrate [--down <rev>]` | operator | — store, offline | Applies pending store migrations (or reverses to `<rev>`); the daemon refuses to start on a schema-revision mismatch and names this command (D-099). |
 
 ## `blizzard runner takeover`
 
@@ -39,6 +43,6 @@ Hand-back is explicit: the human runs `blizzard runner requeue <chunk-id>` when 
 
 ## What the CLI is not
 
-- **Never a database client** — nothing but the owning daemon opens a sqlite file (D-023); the `host` personalities *are* those owning daemons, and every other verb is a pure API client.
+- **Never a database client** — nothing but the owning daemon opens a sqlite file (D-023); the `host` personalities *are* those owning daemons, and every other verb is a pure API client. The one carve-out is each noun's `init`/`migrate` pair (D-099): offline administration of the store that noun's daemon owns, run while the daemon is down — never a parallel reader beside a live daemon, and never a path to another noun's store.
 - **Not the loop** — lease, bind, release, reap are in-process daemon writes and never surface as verbs ([runner/api.md](./runner/api.md)).
 - **Not a push channel into the box** — fleet controls travel hub → runner over the runner's outbound pull (D-012/D-043); the CLI's runner verbs keep working while the hub is unreachable.
