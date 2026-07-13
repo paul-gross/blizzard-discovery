@@ -35,9 +35,9 @@ One station in one graph. A node belongs to exactly one immutable graph; same-na
 | `name` | The cross-graph correlator; the `{node}` component of the artifact store key (D-036); and what runner-side gate configuration selects on (D-032/D-041 — "gate every node named `deliver`"). There is no `type` field: what type would encode is structural (D-041). |
 | executor | `runner` or `hub` — deliver is the first hub-executed node (D-030). |
 | prompt | The base prompt: the node's invariant identity, opening the pre-prompt phase (D-038). |
-| checks | Deterministic commands (tests, lint) — the judgement's second half (D-025). |
+| checks | Check commands (tests, lint) — run by the worker in-session in the MVP, informing the verdict (D-077); engine-executed checks are post-MVP. |
 | judgement | How the exit judgement is rendered — see Judgement spec. |
-| retries | Max attempts plus the exhaustion target (escalation) — the escape hatch out of any cycle. |
+| retries | Max failed attempts — crash, verdict-less exit, reap (D-078); judged failure edges never consume one — plus the exhaustion target (escalation): the escape hatch out of LLM error. Max-visits cycle caps are future scope. |
 | produces | Artifact names the node is expected to submit (D-026/D-036). |
 | session | Fresh or resumed agent session for this node's steps — defaults to resume (D-054); review-style nodes opt into cold eyes. |
 

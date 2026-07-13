@@ -23,7 +23,7 @@ Because `blizzard runner ask` hits the runner's local API *before* the worker ex
 ## The flow, end to end
 
 1. **Ask.** `blizzard runner ask` hits the runner's local API (D-023); the runner records the ask fact and forwards the question to the hub, where it becomes a durable row — `{question_id, chunk_id, session_id, runner_id, options, asked_at}` — and the worker exits. The question's open/answered state is derived from the presence of an answer row, never stored (D-004).
-2. **Park.** The supervisor sees the worker end with an open ask on its lease; the recorded ask is the fact from which the chunk's `waiting_on_human` status derives, and the reap clock **stops** for that chunk. A parked chunk is not stalled and is never reaped for inactivity.
+2. **Park.** The supervisor sees the worker end with an open ask on its lease; the recorded ask is the fact from which the chunk's `waiting_on_human` status derives, and the reap clock **stops** for that chunk. The chunk keeps its lease and its environments while parked (D-082/D-083) — the session is dormant, not dead. A parked chunk is not stalled and is never reaped for inactivity.
 3. **Fan out** (`milestone:centralized-hub`). The question appears on the board and is pushed to the Telegram bot (D-031) as a notification with inline answer buttons — the best phone UX, a pattern borrowed from Archon's chat-platform adapters. In the MVP, this step is simply `blizzard hub status` at the machine.
 4. **Answer.** `blizzard hub answer` (or, remotely, the bot POSTing `/questions/{id}/answer`) writes the answer row at the hub. The hub applies **first-write-wins CAS**: if two people answer simultaneously, exactly one wins and the loser is told "already answered by X."
 5. **Propagate.** The hub emits `question.answered` on the stream. The runner picks it up via its outbound connection or its next PULL poll. Because the answer is a **row, not an in-flight message**, every hop survives a crash — the answer is durable and re-deliverable.
@@ -33,7 +33,7 @@ Because `blizzard runner ask` hits the runner's local API *before* the worker ex
    cd <env> && claude -p --resume <sid> "Answer from <who>: <answer>. Continue."
    ```
 
-   The agent is **reconstituted around the answer**, not messaged mid-flight. The delivery is recorded as a fact — the chunk's derived status returns to running. (Delivery goes through the adapter's `resume` operation — D-050, [runner/contracts.md](./runner/contracts.md).)
+   The agent is **reconstituted around the answer**, not messaged mid-flight, under the same lease — same node-step, same session (D-082). The delivery is recorded as a fact — the chunk's derived status returns to running. (Delivery goes through the adapter's `resume` operation — D-050, [runner/contracts.md](./runner/contracts.md).)
 7. **Confirm.** The answering surface confirms "delivered, agent resumed," closing the trust loop for the human who answered.
 
 ## Why ask-and-exit, not blocking

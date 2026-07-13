@@ -15,10 +15,10 @@ milestone:mvp — the local fleet: the walking skeleton
 │ Q&A at the hub   │    │ deliver node     │    │ review node      │    │ graph engine     │
 └─────────┬────────┘    └──────────────────┘    └──────────────────┘    └──────────────────┘
           │
-┌─────────▼────────┐
-│ epic:board       │
-│ local web app    │
-└─────────┬────────┘
+┌─────────▼────────┐    ┌──────────────────┐
+│ epic:board       │───▶│ epic:gates       │
+│ local web app    │    │ gate nodes+dial  │
+└─────────┬────────┘    └──────────────────┘
           │
           │  milestone:centralized-hub — control plane + spokes
           ▼
@@ -30,15 +30,15 @@ milestone:mvp — the local fleet: the walking skeleton
           │  later — in any order; the mvp core's contracts stay frozen
           ▼
 ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
-│ epic:batching    │    │ epic:adapters    │    │ epic:gates       │
-│ packer → planner │    │ opencode + codex │    │ gate nodes+dial  │
+│ epic:batching    │    │ epic:adapters    │    │ epic:security    │
+│ packer → planner │    │ opencode + codex │    │ worker lockdown  │
 └──────────────────┘    └──────────────────┘    └──────────────────┘
 ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
 │ epic:config      │    │ epic:ci-feedback │    │ epic:team        │
 │ all-as-config    │    │ CI → session     │    │ multi-operator   │
 └──────────────────┘    └──────────────────┘    └──────────────────┘
-┌──────────────────┐
-│ epic:migration   │
-│ graph lifecycle  │
-└──────────────────┘
+┌──────────────────┐    ┌──────────────────┐
+│ epic:migration   │    │ epic:cost        │
+│ graph lifecycle  │    │ cost controls    │
+└──────────────────┘    └──────────────────┘
 ```

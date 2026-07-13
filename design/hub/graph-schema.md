@@ -17,12 +17,12 @@ The graph's operational metadata — `enabled`, `auto_migrate`, `migration_targe
 | Field | Required | Notes |
 |-------|----------|-------|
 | `executor` | no (default `runner`) | `runner` or `hub` — deliver is the first hub-executed node (D-030). |
-| `prompt` | runner nodes | File reference to the base prompt — the node's invariant identity, opening the pre-prompt phase (D-038). Hub nodes carry none. |
-| `checks` | no | List of deterministic commands (tests, lint) — the judgement's second half (D-025). |
+| `prompt` | worker-judged nodes | File reference to the base prompt — the node's invariant identity, opening the pre-prompt phase (D-038). Hub nodes and human-gate nodes carry none — nothing executes at a gate; the runner submits the Decision on arrival (D-045). |
+| `checks` | no | List of check commands (tests, lint) — run by the worker in-session in the MVP, informing its verdict (D-077); engine-executed checks are post-MVP. |
 | `produces` | no | Artifact names the node is expected to submit (D-026/D-036). |
 | `session` | no (default `resume`) | `resume` or `fresh` — per-node session freshness (D-054); review-style nodes opt into cold eyes. |
 | `judgement` | yes | See below. |
-| `retries` | no | `max` (default from the constants) plus `exhausted: escalate` — `escalate` is the only exhaustion target in the MVP, and the escape hatch out of any cycle. |
+| `retries` | no | `max` (default from the constants) plus `exhausted: escalate` — `escalate` is the only exhaustion target in the MVP, and the escape hatch out of any cycle. Retries count execution-attempt failures only — crash, verdict-less exit, reap; a judged failure edge never consumes one (D-078). |
 | executor-specific fields | hub nodes | The deliver node's `mode: merge-to-main \| open-pr` (D-059); future hub node kinds document their own. |
 
 ## Judgement and choices (fused entries — D-071)
@@ -45,7 +45,7 @@ judgement:
 ```
 
 - `by: human` beside `prompt` marks a gate node (D-032/D-041): no judgement prompt, the choices become the board's buttons (D-042/D-045).
-- Hub-executed nodes have **machinery-defined outcomes with default routing**: deliver's are `landed → done` and `conflict →` the conventional `merge` graph, else this graph's entry node (D-058). Omitting `judgement` accepts the defaults; authoring a choice entry (name matching the machinery set) overrides that one outcome — e.g. inline conflict routing.
+- Hub-executed nodes have **machinery-defined outcomes with default routing**: deliver's are `landed → done` and `conflict →` this graph's entry node in the MVP (D-086; the conventional `merge` graph arrives with `epic:migration`, D-058). Omitting `judgement` accepts the defaults; authoring a choice entry (name matching the machinery set) overrides that one outcome — e.g. inline conflict routing.
 - `to` names a node of this graph or the reserved terminal **`done`**. Cross-graph movement is a migration, never an edge (D-040).
 - At mint each entry is compiled into a reified Choice and Edge with exact ids ([domain/graph.md](../domain/graph.md)); the fusion is authoring surface only.
 

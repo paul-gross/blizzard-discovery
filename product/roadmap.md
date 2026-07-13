@@ -4,7 +4,7 @@ The rollout is a sequence of **named milestones**, each carrying a stable `miles
 
 ## milestone:mvp — the local fleet
 
-Epics (see the [registry](./epics.md)): `epic:store`, `epic:supervisor`, `epic:workflow`, `epic:adapters` (Claude Code), `epic:review`, `epic:delivery`, `epic:ask-answer` (hub slice), `epic:hub` (separation slice), `epic:board` (local slice).
+Epics (see the [registry](./epics.md)): `epic:store`, `epic:supervisor`, `epic:workflow`, `epic:adapters` (Claude Code), `epic:review`, `epic:delivery`, `epic:gates` (D-085), `epic:ask-answer` (hub slice), `epic:hub` (separation slice), `epic:board` (local slice).
 
 This is the MVP; [mvp.md](./mvp.md) states its acceptance journey, testable criteria, and cut list.
 
@@ -16,6 +16,7 @@ This is the MVP; [mvp.md](./mvp.md) states its acceptance journey, testable crit
 - Solo execution (one env, one agent per chunk); a chunk wraps one PM item unless grouped by hand in the web app (D-048).
 - The hub-served **web app** (D-048): fleet observability plus queue shaping — reorder the ready queue, group unacquired chunks.
 - Claude Code adapter + hooks.
+- Human gates (D-085): gate nodes and the runner-config dial (`gates = [...]`, D-073); parked Decisions surface and resolve through the CLI and the board (D-052).
 - Ask/answer at the hub: `blizzard runner ask` parks the chunk (`waiting_on_human`); `blizzard hub answer` resumes the dormant session with the answer.
 - Escalation via printed resume commands.
 
@@ -35,7 +36,8 @@ Enable the control plane beyond the local environment, and the spokes out of the
 Unscheduled — in any order, and none may change the mvp core's contracts:
 
 - **Batching** (`epic:batching`) — the rollout ladder (D-011): a deterministic heuristic packer (bundle same-repo, `size:small`-labeled items, capped at about 5 per chunk) first, the LLM planner in shadow mode after it, promoted to driving only when it demonstrably wins. Shape pending the batching × workflow-graph [open question](../decisions/open-questions.md).
-- **Gates** (`epic:gates`) — human-gate nodes plus the runner-config dial: opt-in sign-offs as gate nodes in the graph, or imposed by a runner's configuration on any node by node name (D-025 made gates graph structure; D-032 added the runner dial, D-041 keyed it on names; this ships both).
+- **Worker lockdown** (`epic:security`) — permission profiles beyond the MVP's runner-configured skip-permissions default (D-087), network/credential blast radius, force-push protection, per-node permissions.
+- **Cost controls** (`epic:cost`) — per-chunk/per-night budget caps, token/cost telemetry as facts, model routing by cost, a spend kill-switch (D-087).
 - **Graph lifecycle** (`epic:migration`) — moving in-flight chunks between immutable graphs: explicit migration requests (deferred + forced, D-034/D-037), auto-drift via `migration_target` (D-040), enable/disable (D-039), `PATCH /graphs/{id}`. The MVP mints and runs graphs but never moves a chunk between them.
 - **Hub-side routing** — pin or filter which runner a chunk goes to, by flag at the hub (the seam exists from the MVP, D-024).
 - **Judge-agent nodes** — a fresh evaluator agent as a node's judgement, beyond verdict + checks.

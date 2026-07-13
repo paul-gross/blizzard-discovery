@@ -66,4 +66,4 @@ Every artifact domain entity must **compress losslessly to this row on serializa
 
 ## Merge queue entry
 
-A chunk's serialized delivery fact (D-030): its git-commit artifacts awaiting landing, processed one chunk at a time after the epoch check — strict FIFO with no train batching (D-057), conflicts routed to the conventional `merge` graph (D-058).
+A chunk's serialized delivery fact (D-030), executed by the hub's coordinator (D-079): its git-commit artifacts awaiting landing, processed one chunk at a time after the epoch check — strict FIFO with no train batching (D-057), landed serially per repo with per-repo landed facts and reconciliation on retry (D-091), conflicts routed intra-graph in the MVP (D-086; the conventional `merge` graph arrives with migration, D-058).

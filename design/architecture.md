@@ -16,7 +16,7 @@ What actually runs, where it runs, and how the pieces talk to each other. Each p
 
 ### `blizzard-hub`
 
-The work orchestrator, running as a daemon from the MVP (D-022) — colocated on the runner machine in the solo setup, on a VPS / cloud / home server from `milestone:centralized-hub`. Where it runs is a deployment choice; how it is spoken to never changes. Wraps the PM system into chunks (D-024), owns the workflow graphs and the transition record (D-025/D-027), stores chunk state and artifacts (D-026), executes the deliver node's merge queue (D-030), and is the ask/answer rendezvous. Talks to the PM binding, the forge (delivery), the runners (they dial in), the board, and the chat bot. Deep dive: [hub/](./hub/index.md) — the canonical responsibility list lives there.
+The work orchestrator, running as a daemon from the MVP (D-022) — colocated on the runner machine in the solo setup, on a VPS / cloud / home server from `milestone:centralized-hub`. Where it runs is a deployment choice; how it is spoken to never changes. Wraps the PM system into chunks (D-024), owns the workflow graphs and the transition record (D-025/D-027), stores chunk state and artifacts (D-026), executes hub nodes through its singleton coordinator — the deliver node's merge queue first (D-030/D-079) — and is the ask/answer rendezvous. Talks to the PM binding, the forge (delivery), the runners (they dial in), the board, and the chat bot. Deep dive: [hub/](./hub/index.md) — the canonical responsibility list lives there.
 
 ### `blizzard-runner`
 
@@ -77,9 +77,9 @@ Web clients of the hub. The hub-served **web app** runs from the MVP (D-048): fl
 │                                                                                                  │
 └─────────────────────┬───────────────────────────────────────┬────────────────────────────────────┘
                       │                                       │
-                      │  PULL (each tick, outbound-only):     │  git only:
-                      │  chunks + node envelopes,             │  push branch artifacts (D-026);
-                      │  answers, runner state in;            │  the hub's deliver node merges
+                      │  outbound-only, each tick:            │  git only:
+                      │  FILL claims routes (D-080);          │  push branch artifacts (D-026);
+                      │  envelopes + answers in;              │  the hub's deliver node merges
                       │  transitions, artifacts,              │  them via its merge queue (D-030)
                       │  questions out                        │
                       ▼                                       ▼
@@ -123,8 +123,8 @@ The diagrams encode rules that hold everywhere:
 - **All work flows through the hub (D-024).** The PM binding feeds the hub; runners acquire chunks from the hub and never speak to the PM system. The only external system a runner touches directly is git remotes — branch-artifact pushes; delivery itself (merging, or opening the PR) executes at the hub through the forge (D-030).
 - **Work moves on a graph (D-025/D-027).** The hub owns the workflow definitions and the transition record; the runner holding a chunk advances it through consecutive nodes without re-queuing, and every judgement and transition lands at the hub.
 - **The runner store and the hub are different stores, and both exist from the MVP (D-022).** See the [division of truth](#division-of-truth) below. The wire is settled: the local API is HTTP over a unix domain socket (D-068), and runner→hub is store-and-forward with per-runner sequence idempotency (D-069).
-- **Environments are opaque ids.** The runner asks the workspace provider to acquire, passing the held set (the provider keeps no allocation state — D-062); it gets back an id and a working directory (`feature-x7`, `alpha`, …), records the chunk→env binding as a fact in its store, and reports the route (chunk → runner → workspace → env) to the hub. An acquired environment is clean by contract (D-021).
-- **Workers never talk to the hub.** Only the runner does, outbound-only. A worker's world is its environment, its hooks, and the CLI.
+- **Environments are opaque ids, acquired before the claim.** FILL peeks the hub's ready queue, asks the workspace provider to acquire — passing the held set (the provider keeps no allocation state — D-062) — gets back ids with working directories (`feature-x7`, `alpha`, …), and claims by posting the complete route: chunk → runner → workspace → env (D-080); the binding is a chunk-tenure fact, held until the chunk leaves the runner (D-083). An acquired environment is clean by contract (D-021).
+- **Communication is strictly layered (D-084): worker ↔ runner, runner ↔ hub, hub ↔ PM — never crossing a layer.** A worker's world is its environment, its hooks, and the CLI's runner verbs; even its PM reads go through the runner's proxy route, which forwards to the hub, which calls the vendor. Only the runner talks to the hub, outbound-only.
 - **Humans plug in at three places:** the hub (`blizzard hub status` / `blizzard hub answer`, and the web app's observability and queue shaping — D-048; in the MVP, answering a question means going to the hub), session takeover (`blizzard runner takeover`, or the pasted resume command), and — from `milestone:centralized-hub` — the remote clients: the board's PWA reach and the chat bot.
 - **Every external system sits behind a seam** (D-016): the work source (at the hub, D-024), the workspace provider, the harness, delivery (the deliver node's binding), and the human channel are all interfaces with the reference stack (GitHub, winter, Claude Code) as first bindings.
 

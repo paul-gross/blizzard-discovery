@@ -4,7 +4,7 @@ The runner registry, chunk locators, and the event stream. Part of the [domain m
 
 ## Route
 
-The locator fact (D-021): what makes every chunk findable, and reassignment thinkable (D-027). Born at acquire — `POST /routes` ([api.md](../hub/api.md)) *is* how a runner takes work: the hub selects ready chunks and creates the route rows (D-024).
+The locator fact (D-021): what makes every chunk findable, and reassignment thinkable (D-027). Born complete at the claim — `POST /routes` ([api.md](../hub/api.md)) *is* how a runner takes work (D-080): the runner peeks the hub-ordered queue, acquires the environments, and posts the full route; the hub accepts exactly one claim per chunk (D-024). Released by detach (`route.released`, D-088) or the chunk's terminal outcome.
 
 | Property | Notes |
 |----------|-------|

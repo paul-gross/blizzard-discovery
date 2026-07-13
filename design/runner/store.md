@@ -29,7 +29,7 @@ Per the fleet-wide [facts-only principle](../architecture.md#store-facts-derive-
 
 - lease created
 - environment binding (chunk → env ids, from the workspace provider)
-- pid + process start time
+- pid + process start time — recorded by the spawn wrapper from inside the child, before the harness runs; the adapter-reported session id lands at spawn-return (D-092)
 - last heartbeat
 - last tool activity
 - verdict
@@ -41,7 +41,7 @@ A chunk's *status* — running, stalled, waiting-on-human, done ([domain/events.
 
 ## The outbound buffer (store-and-forward, D-069)
 
-Runner→hub is **store-and-forward always**: every hub-bound fact — transitions, decisions, questions, and the traveling runner-minted facts ([domain/events.md](../domain/events.md)) — is written to the outbound buffer at mint, stamped with a **per-runner monotonic sequence number**, even when the hub is reachable. A single flusher drains the buffer in FIFO order (D-044's ordering made structural — the buffer is the only path, so a lease fact always precedes the transitions minted under it), calling the appropriate hub route per fact kind with the `(runner_id, seq)` idempotency key. The hub keeps a per-runner **high-water mark**: a fact with seq ≤ mark is already-applied and acked without re-applying, and a *semantic* rejection — a stale-epoch transition — still advances the mark, because rejection is an outcome, not a delivery failure. The result is one code path whether the hub is up or not: an outage is just a bigger backlog, and replay-after-outage is the normal drain. Gaps in the sequence are detectable on both sides. One flush is special: a transition submission's apply-response carries the chunk's next node envelope (D-072), which is what ADVANCE waits on before continuing in place — so during an outage a chunk waits at its node boundary while everything else keeps flushing when the hub returns.
+Runner→hub is **store-and-forward always**: every hub-bound fact — transitions, decisions, questions, and the traveling runner-minted facts ([domain/events.md](../domain/events.md)) — is written to the outbound buffer at mint, stamped with a **per-runner monotonic sequence number**, even when the hub is reachable. A single flusher drains the buffer in FIFO order (D-044's ordering made structural — the buffer is the only path, so a lease fact always precedes the transitions minted under it), calling the appropriate hub route per fact kind with the `(runner_id, seq)` idempotency key. The hub keeps a per-runner **high-water mark**: a fact with seq ≤ mark is already-applied and acked without re-applying, and a *semantic* rejection — a stale-epoch transition — still advances the mark, because rejection is an outcome, not a delivery failure. The result is one code path whether the hub is up or not: an outage is just a bigger backlog, and replay-after-outage is the normal drain. Gaps in the sequence are detectable on both sides. One flush is special: a transition submission's apply-response carries the chunk's next node envelope (D-072), which is what ADVANCE waits on before continuing in place — so during an outage a chunk waits at its node boundary while everything else keeps flushing when the hub returns. A lost apply-response cannot wedge that boundary: a retried submission acked as already-applied sends the runner to the idempotent envelope read (`GET /chunks/{id}/envelope`, D-090).
 
 ## Epochs (fencing tokens)
 

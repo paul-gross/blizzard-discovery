@@ -8,8 +8,8 @@ The derived chunk statuses (D-067). Per D-004 none of these is ever a stored col
 
 | Status | Derived from |
 |--------|--------------|
-| `ready` | Ingested by id into a chunk (D-024/D-047), no route recorded yet — sitting in the hub's ready queue. |
-| `running` | A route exists (D-021) and no higher-precedence fact matches. |
+| `ready` | Ingested by id into a chunk (D-024/D-047), no live route — never routed, or released back by detach (D-088) — sitting in the hub's ready queue. |
+| `running` | A live route exists — `route.created` with no later `route.released` (D-021/D-088) — and no higher-precedence fact matches. |
 | `delivering` | The newest accepted transition entered a hub node (D-030) — queued, merging, or awaiting an external merge (D-065); the runner holds environments throughout (D-066). |
 | `waiting_on_human` | An open ask — a question row with no answer row ([ask-answer.md](../ask-answer.md)) — or an open decision — a gate's decision row no transition references (D-045); the reap clock is stopped. The answer row or the resolution flips it back. |
 | `needs_human` | An open escalation — retries exhausted or a worker died without a verdict past the retry cap (D-009) — with no later lease fact: requeue or takeover closes it by supersession, never a resolution fact (D-067). |
@@ -23,8 +23,8 @@ The unit of work that travels the workflow graph (D-024, D-025). The center of t
 | Property | Notes |
 |----------|-------|
 | `chunk_id` | Hub-minted prefixed ULID — `ch_<ulid>` (D-075): type-evident, lexically creation-ordered, the convention every hub entity id follows. |
-| PM pointers | An array of `{provider, url}` pointers (D-075), one per wrapped PM item (D-047) — a GitHub issue in the reference binding; ingest mints one chunk per item, plural pointers arrive by manual grouping in the web app (D-048) and later automated batching (open). Contents are never stored — read pass-through via the hub. |
-| `graph_id` | The immutable graph pinned at mint (D-033/D-040) — travels with the chunk to completion; changes only when a migration record lands. |
+| PM pointers | An array of `{provider, url}` pointers (D-075), one per wrapped PM item (D-047) — a GitHub issue in the reference binding; ingest mints one chunk per item, plural pointers arrive by manual grouping in the web app (D-048) and later automated batching (open). A pointer already held by a live chunk cannot be re-ingested (D-093). Contents are never stored — read pass-through via the hub. |
+| `graph_id` | The immutable graph pinned at mint — the hub-configured default graph at ingest (D-033/D-040/D-081) — travels with the chunk to completion; changes only when a migration record lands. |
 | current node | **Derived** from the transition record (D-027), never stored — always a node of the pinned graph. |
 | status | **Derived** — see the [status enum](#status-enum) above. |
 | transitions | Append-only record reported by the holding runner (D-027) — see Transition. |
@@ -47,7 +47,7 @@ The transition is also the **artifact commit** (D-036): a node-step's transition
 | `decision_id` | Gates only (D-045): the Decision this transition resolves. |
 | artifacts | The artifact entries committed atomically with this transition (D-036) — see [artifacts.md](./artifacts.md). Empty on a gate-resolving transition: the artifacts already landed with the Decision. |
 | `epoch` | The executing lease's fencing epoch — one lease per node-step attempt (D-035) — checked against the chunk's latest epoch; stale transitions are rejected, not recorded (D-007). |
-| `runner_id` | The runner that reported it — the holding runner advances the chunk itself (D-027). |
+| `runner_id` | The reporting author: the holding runner (D-027) — or the hub's coordinator for a hub-node exit (D-079), which mints those steps' leases and epochs itself. |
 | `recorded_at` | When the record landed at the hub. |
 
 A migration between graphs is **never a transition** — see Migration.

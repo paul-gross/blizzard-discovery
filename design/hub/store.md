@@ -13,7 +13,7 @@ The store holds the top two tiers of the [division of truth](../architecture.md#
 - **Routes** — chunk C → runner R → workspace W → environment E (D-021), so every chunk is locatable.
 - **Lease facts** — each lease mint (chunk, epoch, runner), reported by runners (D-035/D-044); a chunk's latest epoch derives from these — the input the transition fence checks stale submissions against (D-007/D-036).
 - **The fleet registry** — registered runners (runner id + workspace id) with their operational state: pause/resume facts append, `paused` derives (D-004/D-043), read back by runners on their outbound connection; a runner-level liveness signal for the board is an [open question](../../decisions/open-questions.md).
-- **The merge queue** — the deliver node's serialized delivery facts (D-030): strict FIFO, one chunk at a time across all its repos (D-057); externally-merged PRs detected by poll or on-demand check (D-065).
+- **The merge queue** — the deliver node's serialized delivery facts (D-030), executed by the coordinator (D-079): strict FIFO, one chunk at a time across all its repos (D-057), landed serially per repo with per-repo landed facts and reconciliation on retry (D-091); externally-merged PRs detected by poll or on-demand check (D-065).
 
 ## What stays open
 

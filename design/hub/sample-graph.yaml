@@ -30,7 +30,8 @@ nodes:                    # keys are node NAMES; the hub mints a universally uni
                           # (D-032/D-041/D-073) — there is no type field
     executor: runner
     prompt: ./prompts/build.md
-    checks:               # the deterministic half of the judgement (D-025)
+    checks:               # run by the worker in-session, informing its verdict (D-077);
+                          # engine-executed checks are post-MVP
       - mise run lint
       - mise run test
     judgement:
@@ -49,7 +50,9 @@ nodes:                    # keys are node NAMES; the hub mints a universally uni
           to: build       # failed checks re-enter build — the self-loop edge
           prompt_addendum: ./prompts/build.from-build.md   # "checks failed, output attached"
     retries:
-      max: 2              # bounded — the escape hatch out of any cycle
+      max: 2              # bounds FAILED ATTEMPTS only — crash, verdict-less exit, reap
+                          # (D-078); a judged fail edge never consumes one. The escape
+                          # hatch out of LLM error, not out of healthy iteration.
       exhausted: escalate # -> needs_human, with the takeover resume command recorded
     # Failure mode (D-009): a worker that exits with no verdict is a failure,
     # never a pass — it consumes a retry like any other failure, runner-locally
@@ -100,10 +103,11 @@ nodes:                    # keys are node NAMES; the hub mints a universally uni
                           # the chunk's environments until the terminal outcome (D-066)
     mode: merge-to-main   # or open-pr (D-059); executor-specific field
     # Hub nodes have machinery-defined outcomes with DEFAULT routing (D-071):
-    # deliver's are landed -> done and conflict -> the conventional `merge`
-    # graph, else this graph's entry node (D-058). Omit `judgement` entirely
-    # to accept the defaults; authoring a choice entry overrides that one
-    # outcome — shown here to route conflicts inline instead:
+    # deliver's are landed -> done and conflict -> this graph's entry node in
+    # the MVP (D-086; the conventional cross-graph `merge` graph arrives with
+    # epic:migration, D-058). Omit `judgement` entirely to accept the defaults;
+    # authoring a choice entry overrides that one outcome — shown here to
+    # route conflicts inline instead:
     judgement:
       choices:
         conflict:
