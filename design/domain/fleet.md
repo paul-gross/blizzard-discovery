@@ -25,7 +25,7 @@ The locator fact (D-021): what makes every chunk findable, and reassignment thin
 
 A runner's connection is outbound-only (D-012), and `workspace_id` names which prepared workspace it spawns into.
 
-**`last_seen_at`** is refreshed by any inbound call (acquire, event push, poll) and by the runner-level heartbeat whose cadence is an [open question](../../decisions/open-questions.md). It is the fact liveness derives from.
+**`last_seen_at`** is refreshed by any inbound call (acquire, event push, poll) and by the dedicated runner-level heartbeat, `POST /runners/{id}/heartbeats` (D-070) — the SSE subscription deliberately never counts, because dead connections linger silently. Cadence and staleness threshold live with the other [constants](../../decisions/open-questions.md). It is the fact liveness derives from.
 
 **liveness** is never a stored column (D-004): `last_seen_at` against a staleness threshold yields online/offline for the board. It is distinct from the worker tool-call heartbeat, which is a runner-store fact and never leaves the machine.
 

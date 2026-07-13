@@ -28,7 +28,7 @@ Expire leases whose holder is gone.
 Exchange state with the hub (outbound-only, D-012; eventually reachable — buffer and flush through outages).
 
 - Acquire ready chunks from the hub when there is capacity to fill (D-024) — each arrives with its **node envelope**: the current node's prompt, config, and the chunk's relevant artifacts.
-- Flush buffered facts upward: transitions, judgements, submitted artifacts, questions, escalations. The runner never talks to the PM system — its reads of PM items go through the hub's pass-through API, and nothing is written back to the PM item in the MVP (D-047).
+- Flush buffered facts upward: transitions, judgements, submitted artifacts, questions, escalations — the outbound buffer drains FIFO with per-runner seq idempotency, whether or not an outage preceded (store-and-forward always, D-069; [store.md](./store.md)). The runner never talks to the PM system — its reads of PM items go through the hub's pass-through API, and nothing is written back to the PM item in the MVP (D-047).
 - Pick up delivered answers, and read the runner's own operational state — adhere to `paused` (D-043).
 
 ### FILL

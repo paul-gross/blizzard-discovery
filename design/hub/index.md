@@ -23,7 +23,7 @@ This is the canonical list — other documents point here rather than restating 
 
 Two structural constraints hold throughout: it **never stores code or transcripts** (D-012) — pointers and assets, not worktrees; it cannot leak what it does not hold — and its sqlite is encapsulated by the daemon (D-023); clients see only the HTTP API.
 
-For most chunk facts the hub is the authority because they are born there or reported to it as the single record; the runner store is authoritative only for the machine-local execution facts that never leave the box. The wire-level protocol details are an [open question](../../decisions/open-questions.md).
+For most chunk facts the hub is the authority because they are born there or reported to it as the single record; the runner store is authoritative only for the machine-local execution facts that never leave the box. The wire is settled: store-and-forward from each runner with per-runner sequence idempotency (D-069), and a dedicated runner-liveness heartbeat (D-070).
 
 ## Topology: colocated in the MVP, remote from `milestone:centralized-hub`
 

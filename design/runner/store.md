@@ -35,9 +35,13 @@ Per the fleet-wide [facts-only principle](../architecture.md#store-facts-derive-
 - verdict
 - open asks — recorded before the asking worker exits ([ask-answer.md](../ask-answer.md)); the fact that distinguishes a parked chunk from a dead one
 - escalations — recorded before the resume command is printed, so no supervisor races the human
-- the outbound buffer — facts awaiting flush to an unreachable hub (transitions, questions, events)
+- the outbound buffer — every hub-bound fact, always (see below)
 
 A chunk's *status* — running, stalled, waiting-on-human, done ([domain/events.md](../domain/events.md) is the canonical vocabulary, D-067) — is never a stored column; it is derived by query. This is what makes the runner's crash recovery correct rather than aspirational (see [loop.md](./loop.md)).
+
+## The outbound buffer (store-and-forward, D-069)
+
+Runner→hub is **store-and-forward always**: every hub-bound fact — transitions, decisions, questions, and the traveling runner-minted facts ([domain/events.md](../domain/events.md)) — is written to the outbound buffer at mint, stamped with a **per-runner monotonic sequence number**, even when the hub is reachable. A single flusher drains the buffer in FIFO order (D-044's ordering made structural — the buffer is the only path, so a lease fact always precedes the transitions minted under it), calling the appropriate hub route per fact kind with the `(runner_id, seq)` idempotency key. The hub keeps a per-runner **high-water mark**: a fact with seq ≤ mark is already-applied and acked without re-applying, and a *semantic* rejection — a stale-epoch transition — still advances the mark, because rejection is an outcome, not a delivery failure. The result is one code path whether the hub is up or not: an outage is just a bigger backlog, and replay-after-outage is the normal drain. Gaps in the sequence are detectable on both sides.
 
 ## Epochs (fencing tokens)
 

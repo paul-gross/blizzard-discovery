@@ -6,7 +6,7 @@ The runner is the hub of the wheel: it is the *only* component that talks to all
 
 ## 1. Runner local API — via the `blizzard` CLI · **draft** (routes in [api.md](./api.md))
 
-Transport: `blizzard <verb>` (D-020) as a pure client of the runner's local API (D-023) — the runner store's sqlite is embedded in the daemon, and the runner reaches it in-process, not through this contract. The surface is resource-oriented with exactly two clients — worker hooks (heartbeats, asks) and the operator's local CLI verbs (status reads, declarative controls, selftests); the route table lives in [api.md](./api.md), the CLI verb surface in [cli.md](../cli.md). The earlier verb-table framing mixed in the loop's internal store writes (lease, bind, release, reap); those never cross the process boundary (D-023/D-049) and are not part of this contract. Open details: the wire transport (tracked in the runner↔hub protocol [open question](../../decisions/open-questions.md)) and exact CLI flags.
+Transport: `blizzard <verb>` (D-020) as a pure client of the runner's local API (D-023) — the runner store's sqlite is embedded in the daemon, and the runner reaches it in-process, not through this contract. The surface is resource-oriented with exactly two clients — worker hooks (heartbeats, asks) and the operator's local CLI verbs (status reads, declarative controls, selftests); the route table lives in [api.md](./api.md), the CLI verb surface in [cli.md](../cli.md). The earlier verb-table framing mixed in the loop's internal store writes (lease, bind, release, reap); those never cross the process boundary (D-023/D-049) and are not part of this contract. Transport is settled: HTTP over a unix domain socket, no degraded read path, hook failures split soft/hard (D-068, [api.md](./api.md)). Open details: exact CLI flags.
 
 ## 2. Runner ↔ Workspace provider · **settled shape (D-062/D-064)** (detail in [environments.md](./environments.md))
 
@@ -34,14 +34,15 @@ Moved hub-side by D-024: the PM binding (GitHub issues in the reference stack) p
 
 ## 5. Runner ↔ Hub · **draft** (from the MVP, colocated in the solo setup — D-022; protocol in [hub/index.md](../hub/index.md))
 
-All connections outbound from the runner (D-012); the hub is eventually-reachable — buffer and flush through outages.
+All connections outbound from the runner (D-012); the hub is eventually-reachable — store-and-forward always, per-runner monotonic seq against the hub's high-water mark (D-069, [store.md](./store.md)).
 
 | Operation | Direction | Notes |
 |-----------|-----------|-------|
 | register | runner → hub | runner id + workspace id; makes the runner visible on the board. |
+| liveness heartbeat | runner → hub | `POST /runners/{id}/heartbeats` (D-070) — refreshes `last_seen_at`; the board's online/offline derives from it. |
 | acquire chunks | runner → hub | ready chunks with their **node envelopes** (prompt, node config, relevant artifacts) — the PULL step (D-024). |
-| transition record | runner → hub | judgement + node transition + the step's artifacts, one atomic write (D-027, D-036): git-commit artifacts pushed to the forge first (D-026); idempotent; carries the lease's epoch — the hub rejects stale ones (D-007/D-030). |
-| event push | runner → hub | leases, routes ("chunk C, runner R, workspace W, env E" — D-021), verdicts, questions; batched, durable rows. |
+| transition record | runner → hub | judgement + node transition + the step's artifacts, one atomic write (D-027, D-036): git-commit artifacts pushed to the forge first (D-026); idempotent via its flush seq (D-069); carries the lease's epoch — the hub rejects stale ones (D-007/D-030). |
+| event push | runner → hub | leases, routes ("chunk C, runner R, workspace W, env E" — D-021), verdicts, questions; batched from the outbound buffer in FIFO order (D-044/D-069). |
 | answer / state pull | hub → runner (over the runner's outbound poll/SSE) | delivered answers, plus the runner's declarative operational state — `paused` now, routing knobs post-MVP (D-043). |
 
 ## 6. Operator ↔ Runner · **draft** (local half shaped in [api.md](./api.md))

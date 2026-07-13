@@ -2,7 +2,7 @@
 
 The canonical fact vocabulary (D-067): every fact a derived status computes from, the store that owns it, and the derivation queries themselves — so no implementer improvises a status column (D-004). Part of the [domain model](./index.md). The [status enum](./work.md#status-enum) summarizes what these derive; this file is the authority on *how*.
 
-Fact names double as event names: the SSE stream (`GET /events/stream`) re-broadcasts hub-landed facts under the same `noun.verb` names, and the batched push (`POST /events`) carries runner-minted facts up under them too — one vocabulary, no separate wire naming. (Batching, dedup, and idempotent ingestion keys for the push remain part of the runner↔hub protocol [open question](../../decisions/open-questions.md).)
+Fact names double as event names: the SSE stream (`GET /events/stream`) re-broadcasts hub-landed facts under the same `noun.verb` names, and the batched push (`POST /events`) carries runner-minted facts up under them too — one vocabulary, no separate wire naming. The push is store-and-forward always, idempotent by per-runner monotonic sequence number against the hub's high-water mark (D-069, [runner/store.md](../runner/store.md)).
 
 ## Hub-owned facts
 
@@ -49,7 +49,7 @@ The queries behind the [status enum](./work.md#status-enum), evaluated at the hu
 |--------|-------|
 | `stopped` | A `chunk.stopped` fact exists. |
 | `done` | A `delivery.landed` or `pr.closed` fact exists (either disposition — D-065). |
-| `needs_human` | An open escalation: `escalation.recorded` with no later `lease.minted` for the chunk (D-067 supersession — requeue and takeover both mint a lease, which closes it by construction; there is no resolution fact). |
+| `needs_human` | An open escalation: `escalation.recorded` with no later `lease.minted` for the chunk (D-067 supersession — requeue makes the chunk leasable again and the next lease mint closes the escalation by construction; there is no resolution fact). A takeover session carries no lease ([cli.md](../cli.md)), so the chunk stays `needs_human` — with human-in-session detail — until requeued and re-leased. |
 | `waiting_on_human` | An open question (`question.asked` without `question.answered`) or an open decision (`decision.submitted` no transition references). The reap clock is stopped. |
 | `delivering` | The newest accepted transition's `to_node` is a hub node (D-030) — queued, merging, or awaiting an external merge (`pr.opened` without `pr.closed`); the runner holds environments throughout (D-066). |
 | `running` | A `route.created` exists. |
