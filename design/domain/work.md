@@ -8,7 +8,8 @@ The derived chunk statuses (D-067). Per D-004 none of these is ever a stored col
 
 | Status | Derived from |
 |--------|--------------|
-| `ready` | Ingested by id into a chunk (D-024/D-047), no live route — never routed, or released back by detach (D-088) — sitting in the hub's ready queue. |
+| `not_ready` | Ingested but not yet promoted (D-103) — a `chunk.promoted` fact is absent and no higher-precedence fact matches. The resting state ingest mints by default: visible on the board but never claimed by a runner. `POST /chunks/{id}/promote` appends the fact that flips it to `ready`. |
+| `ready` | Ingested by id into a chunk (D-024/D-047) **and promoted** (D-103), no live route — never routed, or released back by detach (D-088) — sitting in the hub's ready queue. |
 | `running` | A live route exists — `route.created` with no later `route.released` (D-021/D-088) — and no higher-precedence fact matches. |
 | `delivering` | The newest accepted transition entered a hub node (D-030) — queued, merging, or awaiting an external merge (D-065); the runner holds environments throughout (D-066). |
 | `waiting_on_human` | An open ask — a question row with no answer row ([ask-answer.md](../ask-answer.md)) — or an open decision — a gate's decision row no transition references (D-045); the reap clock is stopped. The answer row or the resolution flips it back. |

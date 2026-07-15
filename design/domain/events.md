@@ -10,7 +10,8 @@ Landed at the hub by its API routes ([api.md](../hub/api.md)); the hub store is 
 
 | Fact | Landed by | Notes |
 |------|-----------|-------|
-| `chunk.minted` | `POST /chunks` | Ingestion by PM pointer (D-047, active-pointer-unique — D-093); carries the graph pin — the configured default graph (D-033/D-081). |
+| `chunk.minted` | `POST /chunks` | Ingestion by PM pointer (D-047, active-pointer-unique — D-093); carries the graph pin — the configured default graph (D-033/D-081). The chunk rests `not_ready` (D-103) until promoted. |
+| `chunk.promoted` | `POST /chunks/{id}/promote` | Flips a `not_ready` chunk to `ready` so a runner may claim it (D-103). Idempotent — the first fact wins. |
 | `chunk.grouped` | `POST /chunks/{id}/group` | The merged-away chunks are discarded into the combined one (D-048). |
 | `chunk.discarded` | `DELETE /chunks/{id}` | Unacquired chunks only (D-047). |
 | `chunk.stopped` | `POST /chunks/{id}/stop` | Operator abandonment, terminal (D-067): legal at any point after acquisition, artifacts and history retained. Terminality is its own fence — every later state-advancing write for the chunk is rejected regardless of epoch. |
@@ -55,6 +56,7 @@ The queries behind the [status enum](./work.md#status-enum), evaluated at the hu
 | `waiting_on_human` | An open question (`question.asked` without `question.answered`) or an open decision (`decision.submitted` no transition references). The reap clock is stopped. |
 | `delivering` | The newest accepted transition's `to_node` is a hub node (D-030) — queued, merging, or awaiting an external merge (`pr.opened` without `pr.closed`); the runner holds environments throughout (D-066). |
 | `running` | A `route.created` exists with no later `route.released` (D-088). |
-| `ready` | The chunk is minted and none of the above — no live route, not grouped away, not discarded. |
+| `not_ready` | The chunk is minted but not yet promoted — no `chunk.promoted` fact — and none of the above (D-103): the default resting state, visible on the board but excluded from the ready queue, so no runner claims it. |
+| `ready` | The chunk is minted, **promoted** (D-103), and none of the above — no live route, not grouped away, not discarded. |
 
 `chunk.discarded` and `chunk.grouped` remove the chunk from every listing rather than deriving a status: the PM item is the durable referent and a discarded chunk is simply gone (D-047).
