@@ -35,4 +35,10 @@ The hub serves one HTTP API + SSE surface to every client — the CLI's fleet ve
 | `POST /events` | Batched event push from runners — the runner-minted facts that travel (`lease.minted`, `escalation.recorded`, `answer.delivered` — [events.md](../domain/events.md), D-067); store-and-forward always, idempotent by per-runner monotonic seq against the hub's high-water mark (D-069). |
 | `GET /events/stream` | The SSE stream — hub-landed facts re-broadcast under their canonical names ([events.md](../domain/events.md), D-067); runners subscribe outbound, the board live-updates from it. |
 
+## Wire conventions
+
+- Timestamps are ISO-8601 with an explicit UTC offset.
+
+## What is deliberately not here
+
 What is deliberately **not** here: code and transcripts (D-012 — git-commit artifacts are the only reference to code), machine-local execution facts (leases, heartbeats, pids, env bindings — the [runner store](../runner/store.md)'s territory; lease facts and their epochs *do* land here via `POST /events`, because the transition fence consumes them — D-044), and any route that reaches into a worktree — a resume command only works on the machine holding the environment, which is what keeps the remote surface structurally unable to touch code.

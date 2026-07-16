@@ -48,7 +48,7 @@ Allocates clean environments by opaque environment id, each returned with its wo
 
 ### web app / chat bot
 
-Web clients of the hub. The hub-served **web app** runs from the MVP (D-048): fleet observability plus queue shaping — prioritize the ready queue, group unacquired chunks; its remote slice (PWA reach, viewer/operator roles) and the Telegram bot (D-031, one-tap answers) arrive with `milestone:centralized-hub`. Talk to the hub only — never a runner. Deep dive: [hub/web-app.md](./hub/web-app.md).
+Web clients of the hub. The hub-served **web app** runs from the MVP (D-048): fleet observability plus queue shaping — prioritize the ready queue, group unacquired chunks; its remote slice (PWA reach, viewer/operator roles) and the Telegram bot (D-031, one-tap answers) arrive with `milestone:centralized-hub`. Talk to the hub, never dialing into a runner; a runner-served panel reading its own machine's local API is the one client of a runner, and it originates there (D-106). Deep dive: [hub/web-app.md](./hub/web-app.md).
 
 ## Inside one runner machine
 
