@@ -47,7 +47,7 @@ All connections outbound from the runner (D-012); the hub is eventually-reachabl
 
 ## 6. Operator ↔ Runner · **draft** (local half shaped in [api.md](./api.md))
 
-Named capabilities (loop.md): pause (stop new leases, drain in-flight), start, and work selection — filter or pin what FILL may lease. The local path is declarative state on the runner singleton — `PATCH /runner {paused}`, mirroring the hub's `PATCH /runners/{id}` (D-043) so one control model serves both surfaces, and the local path keeps working while the hub is unreachable. Work-selection knobs take the same declarative shape post-MVP. Open: how the local flag and the hub registry flag compose into the effective state (the pause-reconciliation [open question](../../decisions/open-questions.md)).
+Named capabilities (loop.md): pause (stop new leases, drain in-flight), start, and work selection — filter or pin what FILL may lease. The local path is declarative state on the runner singleton — `PATCH /runner {paused}`, mirroring the hub's `PATCH /runners/{id}` (D-043) so one control model serves both surfaces, and the local path keeps working while the hub is unreachable. Work-selection knobs take the same declarative shape post-MVP. The two flags compose as an OR and each is cleared only where it was set (D-105).
 
 ## 7. Delivery · **open** — not a runner contract since D-030
 

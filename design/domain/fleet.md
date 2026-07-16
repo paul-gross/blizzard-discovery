@@ -20,7 +20,8 @@ The locator fact (D-021): what makes every chunk findable, and reassignment thin
 | `runner_id` | The runner's identity in the fleet registry, recorded at registration. |
 | `workspace_id` | The per-runner workspace binding (D-019). |
 | `last_seen_at` | Most recent contact with the hub — see below. |
-| `paused` | **Derived** from appended pause/resume facts (D-004, the D-039 pattern) — set via `PATCH /runners/{id}` (D-043); see below. |
+| `hub_paused` | **Derived** from appended pause/resume facts (D-004, the D-039 pattern) — set via `PATCH /runners/{id}` (D-043); see below. |
+| `locally_paused` | **Derived** from appended facts the runner *reports* (D-105) — set on the runner, never here; see below. |
 | liveness | **Derived** from `last_seen_at` (D-004) — see below. |
 
 A runner's connection is outbound-only (D-012), and `workspace_id` names which prepared workspace it spawns into.
@@ -29,7 +30,13 @@ A runner's connection is outbound-only (D-012), and `workspace_id` names which p
 
 **liveness** is never a stored column (D-004): `last_seen_at` against a staleness threshold yields online/offline for the board. It is distinct from the worker tool-call heartbeat, which is a runner-store fact and never leaves the machine.
 
-**`paused`** is the operator's brake (D-043): pause/resume facts append and the flag derives, exactly as a graph's enabled-ness does (D-039). The runner reads its own state on its outbound pull and adheres to it — pausing stops new leases, in-flight chunks run to completion ([loop.md](../runner/loop.md)) — never a push into the dev box (D-012). Post-MVP controls (routing pins) take the same declarative shape; there is no directive queue.
+**A runner has two brakes** (D-105), because two parties can stop it for different reasons. Both append facts and derive their flag (D-004, the D-039 pattern); neither is a stored status. Either one stops new leases — in-flight chunks always run to completion ([loop.md](../runner/loop.md)) — so **effective paused is their OR**, and each is cleared only on the surface that set it.
+
+**`hub_paused`** is the *fleet's* brake (D-043): the operator stops a runner from here, via `PATCH /runners/{id}`. The runner reads it on its outbound pull and adheres to it — never a push into the dev box (D-012) — and `blizzard hub resume` clears it. Advisory today: the hub does not yet refuse a paused runner's claim, so the brake leaks for as long as the runner's next pull takes.
+
+**`locally_paused`** is the *runner's own* brake — it declines to claim ("I won't try"). It is set on the runner machine (`PATCH /runner`, [runner/api.md](../runner/api.md)), which is why it works with the hub unreachable, and it reaches the registry only because the runner **reports** it — `runner.locally_paused` / `runner.locally_resumed` ride its outbound buffer ([events.md](./events.md)). The hub only ever reads this one: it cannot set it, and `blizzard hub resume` cannot clear it. The report exists so the board can say *which* brake is on, since the hub can only render what it holds.
+
+Post-MVP controls (routing pins) take the same declarative shape; there is no directive queue.
 
 ## Event
 

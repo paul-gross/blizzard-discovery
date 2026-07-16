@@ -2,7 +2,7 @@
 
 The supervisor is a deterministic reconciliation loop — a few hundred lines — run under systemd as `blizzard-runner`. Its loop holds **no state of its own**: every fact lives in the daemon's embedded [store](./store.md) (D-023/D-028). This is what makes it `kill -9` safe. Killing the supervisor loses nothing, and startup recovery is simply the reap step running first.
 
-The runner is machine-level and **operator-directed**: it *acquires* work from the hub (D-024), it is never pushed work. The operator can pause it, start it, and choose which work it slots — filtering or pinning what FILL may lease. Pausing stops new leases; in-flight chunks run to completion.
+The runner is machine-level and **operator-directed**: it *acquires* work from the hub (D-024), it is never pushed work. The operator can pause it, start it, and choose which work it slots — filtering or pinning what FILL may lease. Pausing stops new leases; in-flight chunks run to completion. Pause has two surfaces — the fleet's brake and the runner's own, either of which stops new leases (D-105, [domain/fleet.md](../domain/fleet.md)).
 
 ## No state of its own
 
@@ -29,7 +29,7 @@ Expire leases whose holder is gone.
 Exchange state with the hub (outbound-only, D-012; eventually reachable — buffer and flush through outages). Chunk acquisition itself is FILL's claim-by-route (D-080); PULL is the fact channel.
 
 - Flush buffered facts upward: transitions, judgements, submitted artifacts, questions, escalations — the outbound buffer drains FIFO with per-runner seq idempotency, whether or not an outage preceded (store-and-forward always, D-069; [store.md](./store.md)). The runner never talks to the PM system — its reads of PM items go through the hub's pass-through API, and nothing is written back to the PM item in the MVP (D-047).
-- Pick up delivered answers, and read the runner's own operational state — adhere to `paused` (D-043).
+- Pick up delivered answers, and read the fleet's brake — adhere to it (D-043). FILL stops on it or on the runner's own brake, whichever is set (D-105).
 
 ### FILL
 
