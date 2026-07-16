@@ -24,7 +24,7 @@ The unit of work that travels the workflow graph (D-024, D-025). The center of t
 | Property | Notes |
 |----------|-------|
 | `chunk_id` | Hub-minted prefixed ULID — `ch_<ulid>` (D-075): type-evident, lexically creation-ordered, the convention every hub entity id follows. |
-| PM pointers | An array of `{provider, url}` pointers (D-075), one per wrapped PM item (D-047) — a GitHub issue in the reference binding; ingest mints one chunk per item, plural pointers arrive by manual grouping in the web app (D-048) and later automated batching (open). A pointer already held by a live chunk cannot be re-ingested (D-093). Contents are never stored — read pass-through via the hub. |
+| PM pointers | An array of `{source, ref}` pointers (D-104) — the configured `[[pm_source]]`'s name (D-105) plus the item's source-relative reference, one per wrapped PM item (D-047) — a GitHub issue in the reference binding; ingest mints one chunk per item, plural pointers arrive by manual grouping in the web app (D-048) and later automated batching (open). A pointer naming an unconfigured source is rejected at ingest (D-106); a pointer already held by a live chunk cannot be re-ingested (D-093), and de-duplication on group-merge compares `(source, ref)` (D-076/D-104). Contents are never stored — read pass-through via the hub. |
 | `graph_id` | The immutable graph pinned at mint — the hub-configured default graph at ingest (D-033/D-040/D-081) — travels with the chunk to completion; changes only when a migration record lands. |
 | current node | **Derived** from the transition record (D-027), never stored — always a node of the pinned graph. |
 | status | **Derived** — see the [status enum](#status-enum) above. |
