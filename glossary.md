@@ -20,7 +20,7 @@ One line per term, for cold readers and cross-checking harnesses. The owning doc
 | **adapter** | The four-function shim (`spawn` / `resume` / `resume_cmd` / `verdict`, D-050) that translates one harness's CLI; deliberately dumb. |
 | **runner store** | The runner's embedded database: a sqlite (WAL) database inside `blizzard-runner`, reached only through the runner's local API via the `blizzard` CLI (D-023/D-028). |
 | **task / PM item** | A unit of backlog work in the backing project-management system (a GitHub issue in the reference binding); ingested by id into a chunk (D-024/D-047). |
-| **PM pointer** | What a chunk holds per wrapped PM item (D-047): `{source, ref}` — the configured `[[pm_source]]`'s name plus the item's source-relative reference (D-105/D-106) — pass-through reads through that source's own credentialed binding; contents are never stored. |
+| **PM pointer** | What a chunk holds per wrapped PM item (D-047): `{source, ref}` — the configured `[[pm_source]]`'s name plus the item's source-relative reference (D-107/D-108) — pass-through reads through that source's own credentialed binding; contents are never stored. |
 | **chunk** | The hub's unit of orchestrated work: wraps PM item(s), travels the workflow graph, accumulates artifacts; what a runner acquires, holds, and advances. |
 | **workflow graph** | The hub-defined YAML graph of nodes a chunk travels — cyclical by design; the default is build → review → deliver (D-025). |
 | **node** | A station in a workflow graph ("build", "review", "deliver"): a prompt, config, and judgement spec. Runner-executed by default; gates and delivery are nodes too. |

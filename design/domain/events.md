@@ -34,13 +34,14 @@ Landed at the hub by its API routes ([api.md](../hub/api.md)); the hub store is 
 
 ## Runner-minted facts
 
-Minted in the [runner store](../runner/store.md) (D-023). Three travel to the hub through the outbound buffer and `POST /events`, because fleet-visible derivations consume them; the rest never leave the machine.
+Minted in the [runner store](../runner/store.md) (D-023). Most travel to the hub through the outbound buffer and `POST /events`, because fleet-visible derivations consume them; the rest never leave the machine.
 
 | Fact | Travels? | Notes |
 |------|----------|-------|
 | `lease.minted` | → hub (D-044) | One lease per node-step attempt (D-035), epoch attached. |
 | `escalation.recorded` | → hub | Retries exhausted, or a worker died without a verdict past the retry cap (D-009). Recorded before the resume command is printed. |
 | `answer.delivered` | → hub | The resume-with-answer executed ([ask-answer.md](../ask-answer.md)); restarts the reap clock. Status flipped already at `question.answered`. |
+| `runner.locally_paused` / `runner.locally_resumed` | → hub (D-105) | The runner's **own** brake — it declines to claim ([runner/api.md](../runner/api.md), `PATCH /runner`). Named apart from the hub-owned `runner.paused` / `runner.resumed` above because they are separate concepts with separate authors: this one is set machine-locally, works with the hub unreachable, and the hub only ever reads it. Runner-scoped — no chunk correlation. |
 | `takeover.started` / `takeover.ended` | → hub | A human entered/left a parked chunk's session ([cli.md](../cli.md)); board detail (human-in-session), no status derives from it. |
 | env binding, pid + start time, heartbeat, tool activity, verdict, local open-ask copy | never | Machine-local execution truth ([store.md](../runner/store.md)); the worker heartbeat in particular never leaves the box, which is why `stalled` is a runner-local derivation, not a fleet status. |
 

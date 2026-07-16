@@ -8,7 +8,7 @@ This engine is what the earlier drafts' fixed pipeline (plan → build → verif
 
 A chunk is the hub's unit of orchestrated work — what the PM binding's items are wrapped into (D-024), what a runner acquires and holds, what travels the graph, and what artifacts attach to. Its durable state lives at the hub: current node, transition history, judgements, questions, artifacts.
 
-**Identity is hub-native, with a PM back-reference:** a chunk carries a hub-minted id wrapping a reference to its PM item(s) — for the GitHub binding, the issue. D-006's original motivation stands: the solo→team transition stays a **sync-policy change, not a schema migration** — a chunk's PM referent is the same issue no matter whose fleet acquires it. The identity scheme is settled — `ch_`-prefixed ULIDs wrapping `{source, ref}` pointers (D-105) resolved through hub-configured sources (D-106) — and "chunk" is the canonical vocabulary: the planner's "execution unit" is retired, a batch being one chunk with many pointers (D-076).
+**Identity is hub-native, with a PM back-reference:** a chunk carries a hub-minted id wrapping a reference to its PM item(s) — for the GitHub binding, the issue. D-006's original motivation stands: the solo→team transition stays a **sync-policy change, not a schema migration** — a chunk's PM referent is the same issue no matter whose fleet acquires it. The identity scheme is settled — `ch_`-prefixed ULIDs wrapping `{source, ref}` pointers (D-107) resolved through hub-configured sources (D-108) — and "chunk" is the canonical vocabulary: the planner's "execution unit" is retired, a batch being one chunk with many pointers (D-076).
 
 ## The graph
 

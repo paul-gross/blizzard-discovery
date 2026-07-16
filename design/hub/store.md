@@ -12,7 +12,7 @@ The store holds the top two tiers of the [division of truth](../architecture.md#
 - **Questions and answers** — durable rows born here ([ask-answer.md](../ask-answer.md)); a question's answered-ness is derived from the presence of its answer row, with first-write-wins CAS on answering.
 - **Routes** — chunk C → runner R → workspace W → environment E (D-021), so every chunk is locatable.
 - **Lease facts** — each lease mint (chunk, epoch, runner), reported by runners (D-035/D-044); a chunk's latest epoch derives from these — the input the transition fence checks stale submissions against (D-007/D-036).
-- **The fleet registry** — registered runners (runner id + workspace id) with their operational state: pause/resume facts append, `paused` derives (D-004/D-043), read back by runners on their outbound connection; a runner-level liveness signal for the board is an [open question](../../decisions/open-questions.md).
+- **The fleet registry** — registered runners (runner id + workspace id) with their operational state: two independent brakes, each appending facts from which its flag derives (D-004/D-043/D-105) — the fleet's, read back by runners on their outbound connection, and the runner's own, which the hub only holds because the runner reports it ([domain/fleet.md](../domain/fleet.md)); a runner-level liveness signal for the board is an [open question](../../decisions/open-questions.md).
 - **The merge queue** — the deliver node's serialized delivery facts (D-030), executed by the coordinator (D-079): strict FIFO, one chunk at a time across all its repos (D-057), landed serially per repo with per-repo landed facts and reconciliation on retry (D-091); externally-merged PRs detected by poll or on-demand check (D-065).
 
 ## What stays open
